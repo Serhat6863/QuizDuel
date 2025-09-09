@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:quizduel/features/auth/presentation/screen/login_screen.dart';
 import 'firebase_options.dart';
 
 
@@ -19,19 +20,7 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'Flutter Demo',
-      home: Scaffold(
-        backgroundColor: Colors.blue,
-        body: Center(
-          child: const Text(
-            "Hello, World!",
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-        ),
-      )
+      home: LoginScreen(),
     );
   }
 }
