@@ -1,5 +1,8 @@
+import 'package:quizduel/features/auth/domain/entity/user_entity.dart';
+
 abstract class UserRepository {
-  Future<void> signIn(String email, String password);
-  Future<void> register(String email, String password);
+  Future<UserEntity> signIn(String email, String password);
+  Future<UserEntity> register(String email, String password , String username);
   Future<void> signOut();
+  Future<UserEntity?> getCurrentUser();
 }
