@@ -9,12 +9,13 @@ class FirebaseRoomService{
 
 
   // create room
-  Future<RoomModel?> createRoom(RoomModel room, String hostId) async {
+  Future<RoomModel?> createRoom(RoomModel room, String hostId , String roomName) async {
     try{
       final docRef = await firestore.collection("rooms").add({
         ...room.toJson(),
         "hostId": hostId,
         "userId": [hostId],
+        "roomName": roomName,
         "createdAt" : DateTime.now().toIso8601String(),
       });
 

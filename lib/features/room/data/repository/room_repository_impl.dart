@@ -11,11 +11,11 @@ class RoomRepositoryImpl implements RoomRepository{
 
 
   @override
-  Future<RoomEntity?> createRoom(RoomEntity room, String hostId) async{
+  Future<RoomEntity?> createRoom(RoomEntity room, String hostId , String roomName) async{
     try{
       final roomModel = RoomModel(
         roomId: room.roomId,
-        roomName: room.roomName,
+        roomName: roomName,
         hostId: hostId,
         userId: room.userId,
         status: room.status,
@@ -25,7 +25,7 @@ class RoomRepositoryImpl implements RoomRepository{
         quizId: room.quizId,
       );
 
-      final createdRoom = await firebaseRoomService.createRoom(roomModel , hostId);
+      final createdRoom = await firebaseRoomService.createRoom(roomModel , hostId , roomName);
 
       return createdRoom?.toEntity();
 
