@@ -86,7 +86,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                       ),
                                       const SizedBox(width: 8),
                                       Text(
-                                        "Erreur lors de l'inscription,",
+                                        "this email already exist,",
                                         style: TextStyle(
                                           color: Colors.white,
                                           fontWeight: FontWeight.bold,

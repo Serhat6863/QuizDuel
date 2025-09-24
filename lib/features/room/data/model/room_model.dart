@@ -1,0 +1,58 @@
+import 'package:quizduel/features/room/domain/entitiy/room_entity.dart';
+
+class RoomModel extends RoomEntity{
+  RoomModel({
+    required super.roomId,
+    required super.roomName,
+    required super.hostId,
+    required super.userId,
+    required super.status,
+    required super.joinCode,
+    required super.createdAt,
+    required super.maxPlayers,
+    required super.quizId,
+  });
+
+
+  factory RoomModel.fromJson(Map<String, dynamic> json) {
+    return RoomModel(
+      roomId: json['roomId'],
+      roomName: json['roomName'],
+      hostId: json['hostId'],
+      userId: List<String>.from(json['userId']),
+      status: json['status'],
+      joinCode: json['joinCode'],
+      createdAt: DateTime.parse(json['createdAt']),
+      maxPlayers: json['maxPlayers'],
+      quizId: json['quizId'],
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'roomId': roomId,
+      'roomName': roomName,
+      'hostId': hostId,
+      'userId': userId,
+      'status': status,
+      'joinCode': joinCode,
+      'createdAt': createdAt.toIso8601String(),
+      'maxPlayers': maxPlayers,
+      'quizId': quizId,
+    };
+  }
+
+  RoomEntity toEntity() {
+    return RoomEntity(
+      roomId: roomId,
+      roomName: roomName,
+      hostId: hostId,
+      userId: userId,
+      status: status,
+      joinCode: joinCode,
+      createdAt: createdAt,
+      maxPlayers: maxPlayers,
+      quizId: quizId,
+    );
+  }
+}

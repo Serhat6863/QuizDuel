@@ -1,9 +1,12 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:quizduel/features/auth/data/model/user_model.dart';
 
 class FirebaseUserService {
   // Implement Firebase user service methods here
   FirebaseAuth auth = FirebaseAuth.instance;
+  FirebaseFirestore firestore = FirebaseFirestore.instance;
+
 
   //login with email and password
   Future<UserModel?> signInWithEmailAndPassword(
@@ -25,6 +28,8 @@ class FirebaseUserService {
           username: user.displayName ?? '',
         );
       }
+
+
 
       return null;
     } on FirebaseAuthException catch (e) {
@@ -48,15 +53,27 @@ class FirebaseUserService {
       await userCredential.user?.updateDisplayName(username);
 
       final user = userCredential.user;
-      if (user != null) {
-        return UserModel(
-          id: user.uid,
-          email: user.email ?? '',
-          username: user.displayName ?? '',
-        );
+      if (user == null) {
+        return null;
       }
 
-      return null;
+      final userModel = UserModel(
+        id: user.uid,
+        email: user.email ?? '',
+        username: user.displayName ?? '',
+      );
+
+      await firestore.collection('users').doc(user?.uid).set({
+        'id': user?.uid,
+        'email': user?.email,
+        'username': username,
+        'isReady': false,
+        'score': 0,
+      });
+
+
+      return userModel;
+
     } on FirebaseAuthException catch (e) {
       throw Exception(_mapFirebaseError(e));
     }
