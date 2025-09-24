@@ -5,5 +5,5 @@ abstract class RoomRepository{
   Future<void> joinRoom(String roomId , String userId);
   Future<void> leaveRoom(String roomId , String userId);
   Future<void> deleteRoom(String roomId);
-  Future<List<Map<String, dynamic>>> getAvailableRooms();
+  Future <List<RoomEntity>> getAvailableRooms();
 }
