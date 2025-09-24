@@ -1,6 +1,9 @@
+import 'package:quizduel/features/room/domain/entitiy/room_entity.dart';
+
 abstract class RoomRepository{
-  Future<void> createRoom(String roomName, int maxPlayers);
-  Future<void> joinRoom(String roomId);
-  Future<void> leaveRoom(String roomId);
+  Future<RoomEntity?> createRoom(RoomEntity room, String hostId);
+  Future<void> joinRoom(String roomId , String userId);
+  Future<void> leaveRoom(String roomId , String userId);
+  Future<void> deleteRoom(String roomId);
   Future<List<Map<String, dynamic>>> getAvailableRooms();
 }
