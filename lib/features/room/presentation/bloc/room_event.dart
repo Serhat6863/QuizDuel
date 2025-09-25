@@ -1,4 +1,5 @@
 import 'package:equatable/equatable.dart';
+import 'package:quizduel/features/room/domain/entitiy/room_entity.dart';
 
 abstract class RoomEvent extends Equatable{
   @override
@@ -7,18 +8,14 @@ abstract class RoomEvent extends Equatable{
 
 
 class CreateRoomEvent extends RoomEvent{
-  final String roomName;
-  final String hostId;
-  final int maxPlayers;
+  final RoomEntity roomEntity;
 
   CreateRoomEvent({
-    required this.roomName,
-    required this.hostId,
-    required this.maxPlayers,
+    required this.roomEntity
   });
 
   @override
-  List<Object?> get props => [roomName, hostId, maxPlayers];
+  List<Object?> get props => [roomEntity];
 }
 
 

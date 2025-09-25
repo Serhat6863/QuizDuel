@@ -9,13 +9,14 @@ class FirebaseRoomService{
 
 
   // create room
-  Future<RoomModel?> createRoom(RoomModel room, String hostId , String roomName) async {
+  Future<RoomModel?> createRoom(RoomModel room) async {
     try{
       final docRef = await firestore.collection("rooms").add({
         ...room.toJson(),
-        "hostId": hostId,
-        "userId": [hostId],
-        "roomName": roomName,
+        "hostId": room.hostId,
+        "userId": [room.hostId],
+        "roomName": room.roomName,
+        "isHost": true,
         "createdAt" : DateTime.now().toIso8601String(),
       });
 
@@ -49,6 +50,7 @@ class FirebaseRoomService{
           room.userId.add(userId);
           await docRef.update({
             "userId": FieldValue.arrayUnion([userId]),
+            "isHost": false,
           });
         }else{
           throw Exception("Room is full");

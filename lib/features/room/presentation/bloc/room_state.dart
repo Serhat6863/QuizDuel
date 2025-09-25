@@ -1,4 +1,3 @@
-import 'package:quizduel/features/room/data/model/room_model.dart';
 import 'package:quizduel/features/room/domain/entitiy/room_entity.dart';
 
 enum RoomStatus { initial, loading, loaded, error }
@@ -15,11 +14,13 @@ class RoomState{
   final RoomStatus status;
   final String? errorMessage;
   final List<RoomEntity>? availableRooms;
+  final RoomEntity? currentRoom;
 
   RoomState({
     required this.status,
     this.errorMessage,
     this.availableRooms,
+    this.currentRoom,
   });
 
 
@@ -36,9 +37,17 @@ class RoomState{
     errorMessage: message,
   );
 
-  factory RoomState.loaded(List<RoomModel> rooms) => RoomState(
+
+
+  factory RoomState.roomLoaded(List<RoomEntity> rooms) => RoomState(
     status: RoomStatus.loaded,
     availableRooms: rooms,
+  );
+
+
+  factory RoomState.roomCreated(RoomEntity room) => RoomState(
+    status: RoomStatus.loaded,
+    currentRoom: room,
   );
 
 
@@ -46,11 +55,13 @@ class RoomState{
     RoomStatus? status,
     String? errorMessage,
     List<RoomEntity>? availableRooms,
+    RoomEntity? currentRoom,
   }) {
     return RoomState(
       status: status ?? this.status,
       errorMessage: errorMessage ?? this.errorMessage,
       availableRooms: availableRooms ?? this.availableRooms,
+      currentRoom: currentRoom ?? this.currentRoom,
     );
   }
 }

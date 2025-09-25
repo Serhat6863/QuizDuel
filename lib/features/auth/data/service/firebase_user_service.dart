@@ -63,9 +63,9 @@ class FirebaseUserService {
         username: user.displayName ?? '',
       );
 
-      await firestore.collection('users').doc(user?.uid).set({
-        'id': user?.uid,
-        'email': user?.email,
+      await firestore.collection('users').doc(user.uid).set({
+        'id': user.uid,
+        'email': user.email,
         'username': username,
         'isReady': false,
         'score': 0,
@@ -82,7 +82,7 @@ class FirebaseUserService {
   //sign out
   Future<void> signOut() async {
     await auth.signOut();
-    print("User signed out");
+
   }
 
 

@@ -3,6 +3,7 @@ import 'package:quizduel/features/room/data/service/firebase_room_service.dart';
 import 'package:quizduel/features/room/domain/entitiy/room_entity.dart';
 import 'package:quizduel/features/room/domain/repository/room_repository.dart';
 
+
 class RoomRepositoryImpl implements RoomRepository{
 
   final FirebaseRoomService firebaseRoomService;
@@ -11,21 +12,22 @@ class RoomRepositoryImpl implements RoomRepository{
 
 
   @override
-  Future<RoomEntity?> createRoom(RoomEntity room, String hostId , String roomName) async{
+  Future<RoomEntity?> createRoom(RoomEntity room) async{
     try{
       final roomModel = RoomModel(
         roomId: room.roomId,
-        roomName: roomName,
-        hostId: hostId,
+        roomName: room.roomName,
+        hostId: room.hostId,
         userId: room.userId,
         status: room.status,
         joinCode: room.joinCode,
         createdAt: room.createdAt,
         maxPlayers: room.maxPlayers,
         quizId: room.quizId,
+        isHost: room.isHost,
       );
 
-      final createdRoom = await firebaseRoomService.createRoom(roomModel , hostId , roomName);
+      final createdRoom = await firebaseRoomService.createRoom(roomModel);
 
       return createdRoom?.toEntity();
 

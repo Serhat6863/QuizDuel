@@ -11,6 +11,7 @@ class RoomModel extends RoomEntity{
     required super.createdAt,
     required super.maxPlayers,
     required super.quizId,
+    required super.isHost,
   });
 
 
@@ -25,6 +26,7 @@ class RoomModel extends RoomEntity{
       createdAt: DateTime.parse(json['createdAt']),
       maxPlayers: json['maxPlayers'],
       quizId: json['quizId'],
+      isHost: json['isHost'] ?? false,
     );
   }
 
@@ -39,6 +41,7 @@ class RoomModel extends RoomEntity{
       'createdAt': createdAt.toIso8601String(),
       'maxPlayers': maxPlayers,
       'quizId': quizId,
+      'isHost': isHost,
     };
   }
 
@@ -53,6 +56,7 @@ class RoomModel extends RoomEntity{
       createdAt: createdAt,
       maxPlayers: maxPlayers,
       quizId: quizId,
+      isHost: isHost,
     );
   }
 }
