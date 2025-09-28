@@ -11,6 +11,17 @@ class FirebaseRoomService{
   // create room
   Future<RoomModel?> createRoom(RoomModel room) async {
     try{
+
+      // verify if room with same name exists and with same hostId
+      final querySnapshot = await firestore.collection("rooms")
+          .where("roomName", isEqualTo: room.roomName)
+          .where("hostId", isEqualTo: room.hostId)
+          .get();
+
+      if(querySnapshot.docs.isNotEmpty){
+        throw Exception("Room with same name already exists");
+      }
+
       final docRef = await firestore.collection("rooms").add({
         ...room.toJson(),
         "hostId": room.hostId,
@@ -19,6 +30,8 @@ class FirebaseRoomService{
         "isHost": true,
         "createdAt" : DateTime.now().toIso8601String(),
       });
+
+      await docRef.update({"roomId": docRef.id});
 
       final doc = await docRef.get();
 
@@ -95,6 +108,25 @@ class FirebaseRoomService{
       throw Exception(e);
     }
   }
+
+  // room stream
+  Stream<RoomModel> roomStream(String roomId){
+    try{
+      final docRef = firestore.collection("rooms").doc(roomId);
+
+      return docRef.snapshots().map((docRef){
+        if(docRef.exists){
+          return RoomModel.fromJson(docRef.data() as Map<String ,dynamic>);
+        }else{
+          throw Exception("Room not found");
+        }
+      });
+    }catch(e){
+      throw Exception(e);
+    }
+
+  }
+
 
 
 

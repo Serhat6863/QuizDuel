@@ -74,4 +74,10 @@ class RoomRepositoryImpl implements RoomRepository{
     }
   }
 
+  @override
+  Stream<RoomEntity> roomStream(String roomId) {
+    // TODO: implement roomStream
+    throw UnimplementedError();
+  }
+
 }

@@ -6,4 +6,5 @@ abstract class RoomRepository{
   Future<void> leaveRoom(String roomId , String userId);
   Future<void> deleteRoom(String roomId);
   Future <List<RoomEntity>> getAvailableRooms();
+  Stream<RoomEntity> roomStream(String roomId);
 }
