@@ -62,3 +62,14 @@ class FetchAvailableRoomsEvent extends RoomEvent{
   @override
   List<Object?> get props => [];
 }
+
+class ListRoomEvent extends RoomEvent{
+  final String roomId;
+
+  ListRoomEvent({
+    required this.roomId,
+  });
+
+  @override
+  List<Object?> get props => [roomId];
+}

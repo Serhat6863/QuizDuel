@@ -1,4 +1,5 @@
 import 'package:bloc/bloc.dart';
+import 'package:quizduel/features/room/domain/entitiy/room_entity.dart';
 import 'package:quizduel/features/room/domain/repository/room_repository.dart';
 import 'package:quizduel/features/room/presentation/bloc/room_event.dart';
 import 'package:quizduel/features/room/presentation/bloc/room_state.dart';
@@ -13,6 +14,21 @@ class RoomBloc extends Bloc<RoomEvent, RoomState>{
     on<LeaveRoomEvent>(_onLeaveRoom);
     on<DeleteRoomEvent>(_onDeleteRoom);
     on<FetchAvailableRoomsEvent>(_onFetchAvailableRooms);
+
+    on<ListRoomEvent>((event, emit) async {
+
+      emit(RoomState.loading());
+      try{
+        await emit.forEach<RoomEntity>(
+          roomRepository.roomStream(event.roomId),
+          onData: (room) => RoomState.roomCreated(room),
+          onError: (error, stackTrace) => RoomState.error(error.toString()),
+        );
+      }catch(e){
+        emit(RoomState.error(e.toString()));
+      }
+
+    });
   }
 
   Future<void> _onCreateRoom(CreateRoomEvent event, Emitter<RoomState> emit) async{
@@ -102,4 +118,5 @@ class RoomBloc extends Bloc<RoomEvent, RoomState>{
       emit(RoomState.error(e.toString()));
     }
   }
+
 }
