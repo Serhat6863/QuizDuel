@@ -21,7 +21,6 @@ class _RoomScreenState extends State<RoomScreen> {
   void initState() {
     // TODO: implement initState
     super.initState();
-
   }
 
 
@@ -30,22 +29,20 @@ class _RoomScreenState extends State<RoomScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Room: ${widget.roomEntity.hostId}'),
+        title: Text('Room: ${widget.roomEntity.roomName}' , style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 24),),
+        centerTitle: true,
+        backgroundColor: Colors.deepPurple,
+
       ),
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Text('Room ID: ${widget.roomEntity.roomId}'),
-            Text('Room Name: ${widget.roomEntity.roomName}'),
-            Text('Host ID: ${widget.roomEntity.hostId}'),
-            Text('Status: ${widget.roomEntity.status}'),
-            Text('Join Code: ${widget.roomEntity.joinCode}'),
-            Text('Created At: ${widget.roomEntity.createdAt}'),
-            Text('Max Players: ${widget.roomEntity.maxPlayers}'),
-            Text('Quiz ID: ${widget.roomEntity.quizId}'),
-            Text('Is Host: ${widget.roomEntity.isHost}'),
 
+            Text('Room ID: ${widget.roomEntity.roomId}'),
+
+
+            const SizedBox(height: 20,),
             ElevatedButton(
               onPressed: (){
                 if(widget.roomEntity.isHost){

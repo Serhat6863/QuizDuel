@@ -22,6 +22,14 @@ class _RoomListScreenState extends State<RoomListScreen> {
 
 
   @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+    context.read<RoomBloc>().add(FetchAvailableRoomsEvent());
+  }
+
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
@@ -56,22 +64,39 @@ class _RoomListScreenState extends State<RoomListScreen> {
                       itemBuilder: (context, index) {
                         final room = state.availableRooms![index];
                         final user = context.read<AuthBloc>().state.user;
-                        return ListTile(
-                          title: Text(room.roomName),
-                          subtitle: Text(
-                            'Host: ${room.hostId} - Players: ${room.userId}/${room.maxPlayers}',
+                        return Container(
+                          margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                          decoration: BoxDecoration(
+                            color: Colors.deepPurple,
+                            borderRadius: BorderRadius.circular(10),
                           ),
-                          trailing: ElevatedButton(
-                            onPressed: () {
-                              // Join Room Logic
-                              context.read<RoomBloc>().add(
-                                JoinRoomEvent(
-                                  roomId: room.roomId,
-                                  userId: user!.id,
-                                ),
-                              );
-                            },
-                            child: const Text('Join'),
+                          child: ListTile(
+                            title: Text(
+                              "Room Name : ${room.roomName}",
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            subtitle: Text(
+                              'Players: ${room.userId.length}/${room.maxPlayers}',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                            trailing: ElevatedButton(
+                              onPressed: () {
+                                // Join Room Logic
+                                context.read<RoomBloc>().add(
+                                  JoinRoomEvent(
+                                    roomId: room.roomId,
+                                    userId: user!.id,
+                                  ),
+                                );
+                              },
+                              child: const Text('Join'),
+                            ),
                           ),
                         );
                       },
