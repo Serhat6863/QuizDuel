@@ -76,8 +76,11 @@ class RoomRepositoryImpl implements RoomRepository{
 
   @override
   Stream<RoomEntity> roomStream(String roomId) {
-    // TODO: implement roomStream
-    throw UnimplementedError();
+    try{
+      return firebaseRoomService.roomStream(roomId).map((roomModel) => roomModel.toEntity());
+    }catch(e){
+      throw Exception("Something went wrong while streaming room: ${e.toString()}");
+    }
   }
 
 }
