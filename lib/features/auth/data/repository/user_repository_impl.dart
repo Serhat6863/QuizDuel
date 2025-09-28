@@ -77,4 +77,14 @@ class UserRepositoryImpl implements UserRepository {
       throw Exception("Error in UserRepositoryImpl.getCurrentUser: $e");
     }
   }
+
+  @override
+  Future<String> getUsernameById(String userId) async{
+    try{
+      final username = await firebaseUserService.getUsernameById(userId);
+      return username;
+    }catch(e){
+      throw Exception("Error in UserRepositoryImpl.getUsernameById: $e");
+    }
+  }
 }

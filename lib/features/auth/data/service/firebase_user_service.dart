@@ -99,6 +99,23 @@ class FirebaseUserService {
     return null;
   }
 
+
+  //get username by id
+  Future<String> getUsernameById(String userId) async{
+    try{
+      final doc = await firestore.collection("users").doc(userId).get();
+      if(doc.exists){
+        final data = doc.data() as Map<String , dynamic>;
+        return data["username"] ?? "";
+      }else{
+        throw Exception("User not found");
+      }
+
+    }catch(e){
+      throw Exception(e);
+    }
+  }
+
   String _mapFirebaseError(FirebaseAuthException e) {
     switch (e.code) {
       case 'user-not-found':
