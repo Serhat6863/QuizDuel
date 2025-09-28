@@ -188,12 +188,29 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                 ),
 
                                 child: state.status.isLoading
-                                    ? const CircularProgressIndicator(
-                                        color: Colors.white,
-                                        strokeWidth: 2,
+                                    ? Row(
+                                        children: [
+                                          const SizedBox(
+                                            height: 20,
+                                            width: 20,
+                                            child: CircularProgressIndicator(
+                                              color: Colors.white,
+                                              strokeWidth: 2,
+                                            ),
+                                          ),
+                                          const SizedBox(width: 20),
+                                          Text(
+                                            "Loading...",
+                                            style: TextStyle(
+                                              color: Colors.white,
+                                              fontSize: 18,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          ),
+                                        ],
                                       )
                                     : Text(
-                                        "Register",
+                                        "Login",
                                         style: TextStyle(
                                           color: Colors.white,
                                           fontSize: 18,

@@ -73,8 +73,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           key: formKey,
                           child: Column(
                             children: [
-
-                              if(state.status.isFailure)
+                              if (state.status.isFailure)
                                 Container(
                                   decoration: BoxDecoration(
                                     color: Colors.red.shade400,
@@ -83,8 +82,11 @@ class _LoginScreenState extends State<LoginScreen> {
 
                                   child: Row(
                                     children: [
-                                      const Icon(Icons.error , color: Colors.red,),
-                                      const SizedBox(width: 8,),
+                                      const Icon(
+                                        Icons.error,
+                                        color: Colors.red,
+                                      ),
+                                      const SizedBox(width: 8),
                                       Expanded(
                                         child: Text(
                                           "Email ou mot de passe incorrect",
@@ -93,13 +95,13 @@ class _LoginScreenState extends State<LoginScreen> {
                                             fontWeight: FontWeight.bold,
                                           ),
                                         ),
-                                      )
+                                      ),
                                     ],
                                   ),
                                 ),
 
-
-                              if(state.status.isFailure) const SizedBox(height: 15,),
+                              if (state.status.isFailure)
+                                const SizedBox(height: 15),
 
                               //form field email
                               CustomTextField(
@@ -171,13 +173,27 @@ class _LoginScreenState extends State<LoginScreen> {
                                 ),
 
                                 child: state.status.isLoading
-                                    ? const CircularProgressIndicator(
-                                        color: Colors.white,
-                                        strokeWidth: 2,
-
-
-
-                                )
+                                    ? Row(
+                                        children: [
+                                          const SizedBox(
+                                            height: 20,
+                                            width: 20,
+                                            child: CircularProgressIndicator(
+                                              color: Colors.white,
+                                              strokeWidth: 2,
+                                            ),
+                                          ),
+                                          const SizedBox(width: 20),
+                                          Text(
+                                            "Loading...",
+                                            style: TextStyle(
+                                              color: Colors.white,
+                                              fontSize: 18,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          ),
+                                        ],
+                                      )
                                     : Text(
                                         "Login",
                                         style: TextStyle(
