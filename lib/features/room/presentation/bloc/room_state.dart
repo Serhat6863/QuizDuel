@@ -1,12 +1,13 @@
 import 'package:quizduel/features/room/domain/entitiy/room_entity.dart';
 
-enum RoomStatus { initial, loading, loaded, error }
+enum RoomStatus { initial, loading, error , roomCreated, loaded}
 
 extension RoomStatusX on RoomStatus {
   bool get isInitial => this == RoomStatus.initial;
   bool get isLoading => this == RoomStatus.loading;
-  bool get isLoaded => this == RoomStatus.loaded;
   bool get isError => this == RoomStatus.error;
+  bool get isRoomCreated => this == RoomStatus.roomCreated;
+  bool get isLoaded => this == RoomStatus.loaded;
 }
 
 
@@ -46,7 +47,7 @@ class RoomState{
 
 
   factory RoomState.roomCreated(RoomEntity room) => RoomState(
-    status: RoomStatus.loaded,
+    status: RoomStatus.roomCreated,
     currentRoom: room,
   );
 

@@ -8,7 +8,7 @@ class CustomCardWidget extends StatelessWidget {
   final String subtitle;
   final IconData iconData;
   final VoidCallback onTap;
-  final String buttonText;
+  final Widget buttonText;
   final Color buttonColor;
 
 
@@ -66,19 +66,11 @@ class CustomCardWidget extends StatelessWidget {
                     horizontal: 30,
                   ),
                 ),
-                onPressed: () {},
+                onPressed: onTap,
 
-                child: Text(
-                  buttonText,
-                  style: TextStyle(
-                    fontSize: 20,
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold
-                  ),
+                child: buttonText,
                 ),
               ),
-            )
-
           ],
         ),
       ),
