@@ -1,4 +1,5 @@
 import 'package:equatable/equatable.dart';
+import 'package:quizduel/features/auth/domain/entity/user_entity.dart';
 import 'package:quizduel/features/room/domain/entitiy/room_entity.dart';
 
 abstract class RoomEvent extends Equatable{
@@ -21,28 +22,28 @@ class CreateRoomEvent extends RoomEvent{
 
 class JoinRoomEvent extends RoomEvent{
   final String roomId;
-  final String userId;
+  final UserEntity userEntity;
 
   JoinRoomEvent({
     required this.roomId,
-    required this.userId,
+    required this.userEntity,
   });
 
   @override
-  List<Object?> get props => [roomId, userId];
+  List<Object?> get props => [roomId, userEntity];
 }
 
 class LeaveRoomEvent extends RoomEvent{
   final String roomId;
-  final String userId;
+  final UserEntity userEntity;
 
   LeaveRoomEvent({
     required this.roomId,
-    required this.userId,
+    required this.userEntity,
   });
 
   @override
-  List<Object?> get props => [roomId, userId];
+  List<Object?> get props => [roomId, userEntity];
 }
 
 class DeleteRoomEvent extends RoomEvent{
@@ -72,4 +73,16 @@ class ListRoomEvent extends RoomEvent{
 
   @override
   List<Object?> get props => [roomId];
+}
+
+
+class FetchUsernameEvent extends RoomEvent{
+  final List<UserEntity> userEntitys;
+
+  FetchUsernameEvent({
+    required this.userEntitys,
+  });
+
+  @override
+  List<Object?> get props => [userEntitys];
 }

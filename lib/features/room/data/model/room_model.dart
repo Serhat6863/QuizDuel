@@ -1,11 +1,14 @@
+import 'package:quizduel/features/auth/data/model/user_model.dart';
 import 'package:quizduel/features/room/domain/entitiy/room_entity.dart';
+
+import '../../../auth/domain/entity/user_entity.dart';
 
 class RoomModel extends RoomEntity{
   RoomModel({
     required super.roomId,
     required super.roomName,
     required super.hostId,
-    required super.userId,
+    required super.user,
     required super.status,
     required super.joinCode,
     required super.createdAt,
@@ -20,7 +23,7 @@ class RoomModel extends RoomEntity{
       roomId: json['roomId'] ?? '',
       roomName: json['roomName'] ?? 'Room',
       hostId: json['hostId'] ?? '',
-      userId: json['userId'] != null ? List<String>.from(json['userId']) : [],
+      user: json['user'] != null ? List<UserModel>.from(json['user'].map((x) => UserModel.fromJson(x))) : [],
       status: json['status'] ?? 'waiting',
       joinCode: json['joinCode'] ?? '',
       createdAt: json['createdAt'] != null ? DateTime.parse(json['createdAt']) : DateTime.now(),
@@ -36,7 +39,7 @@ class RoomModel extends RoomEntity{
       'roomId': roomId ?? '',
       'roomName': roomName ?? 'Room',
       'hostId': hostId ?? '',
-      'userId': userId ?? [],
+      'user': user ?? [],
       'status': status ?? 'waiting',
       'joinCode': joinCode ?? '',
       'createdAt': createdAt.toIso8601String() ?? DateTime.now().toIso8601String(),
@@ -51,7 +54,7 @@ class RoomModel extends RoomEntity{
       roomId: roomId,
       roomName: roomName,
       hostId: hostId,
-      userId: userId,
+      user: user,
       status: status,
       joinCode: joinCode,
       createdAt: createdAt,

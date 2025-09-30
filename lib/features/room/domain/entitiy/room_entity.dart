@@ -1,8 +1,10 @@
+import 'package:quizduel/features/auth/domain/entity/user_entity.dart';
+
 class RoomEntity {
   final String roomId;
   final String roomName;
   final String hostId;
-  final List<String> userId;
+  final List<UserEntity> user;
   final String status;
   final String joinCode;
   final DateTime createdAt;
@@ -15,7 +17,7 @@ class RoomEntity {
     required this.roomId,
     required this.hostId,
     required this.status,
-    required this.userId,
+    required this.user,
     required this.createdAt,
     required this.joinCode,
     required this.maxPlayers,

@@ -65,7 +65,7 @@ class MyApp extends StatelessWidget {
           create: (context) => AuthBloc(userRepository: context.read<UserRepository>())..add(AppStarted()),
         ),
         BlocProvider<RoomBloc>(
-          create: (context) => RoomBloc(roomRepository: context.read<RoomRepository>()),
+          create: (context) => RoomBloc(roomRepository: context.read<RoomRepository>() , userRepository: context.read<UserRepository>()),
         ),
       ],
       child: MaterialApp(

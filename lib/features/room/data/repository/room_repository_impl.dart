@@ -1,3 +1,5 @@
+import 'package:quizduel/features/auth/data/model/user_model.dart';
+import 'package:quizduel/features/auth/domain/entity/user_entity.dart';
 import 'package:quizduel/features/room/data/model/room_model.dart';
 import 'package:quizduel/features/room/data/service/firebase_room_service.dart';
 import 'package:quizduel/features/room/domain/entitiy/room_entity.dart';
@@ -18,7 +20,7 @@ class RoomRepositoryImpl implements RoomRepository{
         roomId: room.roomId,
         roomName: room.roomName,
         hostId: room.hostId,
-        userId: room.userId,
+        user: room.user,
         status: room.status,
         joinCode: room.joinCode,
         createdAt: room.createdAt,
@@ -57,18 +59,33 @@ class RoomRepositoryImpl implements RoomRepository{
   }
 
   @override
-  Future<void> joinRoom(String roomId, String userId) async{
+  Future<void> joinRoom(String roomId, UserEntity user) async{
     try{
-      await firebaseRoomService.joinRoom(roomId, userId);
+
+      final userModel = UserModel(
+        id: user.id,
+        email: user.email,
+        username: user.username,
+      );
+
+      await firebaseRoomService.joinRoom(roomId, userModel);
     }catch(e){
       throw Exception("Something went wrong while joining room: ${e.toString()}");
     }
   }
 
   @override
-  Future<void> leaveRoom(String roomId, String userId) async{
+  Future<void> leaveRoom(String roomId, UserEntity user) async{
     try{
-      await firebaseRoomService.leaveRoom(roomId, userId);
+
+      final userModel = UserModel(
+        id: user.id,
+        email: user.email,
+        username: user.username,
+      );
+
+
+      await firebaseRoomService.leaveRoom(roomId, userModel);
     }catch(e){
       throw Exception("Something went wrong while leaving room: ${e.toString()}");
     }

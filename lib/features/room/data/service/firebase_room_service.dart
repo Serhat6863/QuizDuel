@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:quizduel/features/auth/data/model/user_model.dart';
 
 import '../model/room_model.dart';
 
@@ -22,10 +23,24 @@ class FirebaseRoomService{
         throw Exception("Room with same name already exists");
       }
 
+
+      final userData = room.user.map((user){
+        if(user is UserModel){
+          return user.toJson();
+        }else {
+          return UserModel(
+          id: user.id,
+          email: user.email,
+          username: user.username,
+        ).toJson();
+        }
+      }).toList();
+
+
       final docRef = await firestore.collection("rooms").add({
         ...room.toJson(),
         "hostId": room.hostId,
-        "userId": [room.hostId],
+        "user": userData,
         "roomName": room.roomName,
         "isHost": true,
         "createdAt" : DateTime.now().toIso8601String(),
@@ -52,17 +67,17 @@ class FirebaseRoomService{
   }
 
   // join room
-  Future<void> joinRoom(String roomId , String userId) async {
+  Future<void> joinRoom(String roomId , UserModel user) async {
     try{
       final docRef = firestore.collection("rooms").doc(roomId);
       final doc = await docRef.get();
 
       if(doc.exists){
         final room = RoomModel.fromJson(doc.data() as Map<String ,dynamic>);
-        if(room.userId.length < room.maxPlayers){
-          room.userId.add(userId);
+        if(room.user.length < room.maxPlayers){
+          room.user.add(user);
           await docRef.update({
-            "userId": FieldValue.arrayUnion([userId]),
+            "user": FieldValue.arrayUnion([user]),
             "isHost": false,
           });
         }else{
@@ -76,17 +91,17 @@ class FirebaseRoomService{
 
 
   // leave room
-  Future<void> leaveRoom(String roomId , String userId) async {
+  Future<void> leaveRoom(String roomId , UserModel user) async {
     try{
       final docRef = firestore.collection("rooms").doc(roomId);
       final doc = await docRef.get();
 
       if(doc.exists){
         final room = RoomModel.fromJson(doc.data() as Map<String ,dynamic>);
-        if(room.userId.contains(userId)){
-          room.userId.remove(userId);
+        if(room.user.contains(user)){
+          room.user.remove(user);
           await docRef.update({
-            "userId": FieldValue.arrayRemove([userId]),
+            "userId": FieldValue.arrayRemove([user]),
           });
         }else{
           throw Exception("User not in room");
