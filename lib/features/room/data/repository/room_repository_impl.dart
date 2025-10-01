@@ -26,10 +26,13 @@ class RoomRepositoryImpl implements RoomRepository{
         createdAt: room.createdAt,
         maxPlayers: room.maxPlayers,
         quizId: room.quizId,
-        isHost: room.isHost,
+
       );
 
-      final createdRoom = await firebaseRoomService.createRoom(roomModel);
+      final createdRoom = await firebaseRoomService.createRoom(roomModel)
+      .timeout(const Duration(seconds: 30), onTimeout: (){
+        throw Exception("Room creation timed out");
+      });
 
       return createdRoom?.toEntity();
 
@@ -97,6 +100,16 @@ class RoomRepositoryImpl implements RoomRepository{
       return firebaseRoomService.roomStream(roomId).map((roomModel) => roomModel.toEntity());
     }catch(e){
       throw Exception("Something went wrong while streaming room: ${e.toString()}");
+    }
+  }
+
+  @override
+  Future<void> autoDeleteRoom(String roomId) async{
+    try{
+      await firebaseRoomService.setAutoDeleteOndiconnect(roomId);
+
+    }catch(e){
+      throw Exception("Something went wrong while setting up auto delete for room: ${e.toString()}");
     }
   }
 

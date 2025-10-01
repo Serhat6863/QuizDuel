@@ -54,6 +54,7 @@ class DefaultFirebaseOptions {
     appId: '1:54354744509:android:d7210a8b2d362f948f53d4',
     messagingSenderId: '54354744509',
     projectId: 'quizduel-b3a50',
+    databaseURL: 'https://quizduel-b3a50-default-rtdb.europe-west1.firebasedatabase.app',
     storageBucket: 'quizduel-b3a50.firebasestorage.app',
   );
 
@@ -62,7 +63,9 @@ class DefaultFirebaseOptions {
     appId: '1:54354744509:ios:df759b6f94c309ae8f53d4',
     messagingSenderId: '54354744509',
     projectId: 'quizduel-b3a50',
+    databaseURL: 'https://quizduel-b3a50-default-rtdb.europe-west1.firebasedatabase.app',
     storageBucket: 'quizduel-b3a50.firebasestorage.app',
     iosBundleId: 'com.example.quizduel',
   );
+
 }

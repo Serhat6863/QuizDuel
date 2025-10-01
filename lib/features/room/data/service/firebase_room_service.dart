@@ -1,57 +1,60 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:quizduel/features/auth/data/model/user_model.dart';
+import 'package:firebase_database/firebase_database.dart';
 
 import '../model/room_model.dart';
 
 class FirebaseRoomService{
 
+  final DatabaseReference db = FirebaseDatabase.instance.ref();
 
-  FirebaseFirestore firestore = FirebaseFirestore.instance;
 
-
+  //create room
   // create room
   Future<RoomModel?> createRoom(RoomModel room) async {
-    try{
+    try {
+      final roomRef = db.child("rooms").push();
 
-      // verify if room with same name exists and with same hostId
-      final querySnapshot = await firestore.collection("rooms")
-          .where("roomName", isEqualTo: room.roomName)
-          .where("hostId", isEqualTo: room.hostId)
-          .get();
+      print("avant set()");
 
-      if(querySnapshot.docs.isNotEmpty){
-        throw Exception("Room with same name already exists");
-      }
+      // 👇 On stocke les users en Map, clé = userId
+      final Map<String, dynamic> userData = {
+        for (var u in room.user)
+          u.id: (u is UserModel
+              ? u.toJson()
+              : UserModel(
+            id: u.id,
+            email: u.email,
+            username: u.username,
+          ).toJson())
+      };
 
-
-      final userData = room.user.map((user){
-        if(user is UserModel){
-          return user.toJson();
-        }else {
-          return UserModel(
-          id: user.id,
-          email: user.email,
-          username: user.username,
-        ).toJson();
-        }
-      }).toList();
-
-
-      final docRef = await firestore.collection("rooms").add({
+      final roomData = {
         ...room.toJson(),
-        "hostId": room.hostId,
-        "user": userData,
-        "roomName": room.roomName,
+        "roomId": roomRef.key,
+        "user": userData, // 👈 Map au lieu de List
         "isHost": true,
-        "createdAt" : DateTime.now().toIso8601String(),
-      });
+        "createdAt": DateTime.now().toIso8601String(),
+      };
 
-      await docRef.update({"roomId": docRef.id});
+      await roomRef.set(roomData);
 
-      final doc = await docRef.get();
+      print("après set()");
 
-      return RoomModel.fromJson(doc.data() as Map<String ,dynamic>);
+      return RoomModel.fromJson(roomData);
+    } catch (e) {
+      print(e.toString());
+      throw Exception(e);
+    }
+  }
 
+
+
+
+
+  Future<void> setAutoDeleteOndiconnect(String roomId) async{
+    try{
+      final roomRef = db.child("rooms/$roomId");
+      await roomRef.onDisconnect().remove();
     }catch(e){
       throw Exception(e);
     }
@@ -59,90 +62,86 @@ class FirebaseRoomService{
 
   // delete room
   Future<void> deleteRoom(String roomId) async {
-    try{
-      await firestore.collection("rooms").doc(roomId).delete();
-    }catch(e){
-      throw Exception(e);
-    }
-  }
-
-  // join room
-  Future<void> joinRoom(String roomId , UserModel user) async {
-    try{
-      final docRef = firestore.collection("rooms").doc(roomId);
-      final doc = await docRef.get();
-
-      if(doc.exists){
-        final room = RoomModel.fromJson(doc.data() as Map<String ,dynamic>);
-        if(room.user.length < room.maxPlayers){
-          room.user.add(user);
-          await docRef.update({
-            "user": FieldValue.arrayUnion([user]),
-            "isHost": false,
-          });
-        }else{
-          throw Exception("Room is full");
-        }
-      }
-    }catch(e){
+    try {
+      await db.child("rooms/$roomId").remove();
+    } catch (e) {
+      print(e.toString());
       throw Exception(e);
     }
   }
 
 
-  // leave room
-  Future<void> leaveRoom(String roomId , UserModel user) async {
+  //join room
+  Future<void> joinRoom(String roomId , UserModel user) async{
     try{
-      final docRef = firestore.collection("rooms").doc(roomId);
-      final doc = await docRef.get();
-
-      if(doc.exists){
-        final room = RoomModel.fromJson(doc.data() as Map<String ,dynamic>);
-        if(room.user.contains(user)){
-          room.user.remove(user);
-          await docRef.update({
-            "userId": FieldValue.arrayRemove([user]),
-          });
-        }else{
-          throw Exception("User not in room");
-        }
-      }
+      final userRef = db.child("rooms/$roomId/user/${user.id}");
+      await userRef.set(user.toJson());
     }catch(e){
+      print(e.toString());
       throw Exception(e);
     }
   }
 
+  Future<void> leaveRoom(String roomId, UserModel user) async {
+    try {
+      final userRef = db.child("rooms/$roomId/user/${user.id}");
+      await userRef.remove();
+    } catch (e) {
+      throw Exception(e);
+    }
+  }
 
   // get available rooms
   Future<List<RoomModel>> getAvailableRooms() async {
-    try{
-      final querySnapshot = await firestore.collection("rooms").get();
-      final rooms = querySnapshot.docs.map((doc) => RoomModel.fromJson(doc.data())).toList();
-      return rooms;
-    }catch(e){
-      throw Exception(e);
+    try {
+      final snapshot = await db.child("rooms").get();
+
+      if (snapshot.exists && snapshot.value is Map) {
+        final rawMap = snapshot.value as Map<Object?, Object?>;
+
+        final rooms = rawMap.entries.map((entry) {
+          final roomData = deepCast(entry.value as Map);
+          return RoomModel.fromJson(roomData);
+        }).toList();
+
+        return rooms;
+      }
+      return [];
+    } catch (e) {
+      throw Exception("Error while fetching rooms: $e");
     }
   }
+
+  // Deep cast function to convert Map<Object?, Object?> to Map<String, dynamic>
+  Map<String, dynamic> deepCast(Map input) {
+    return input.map((key, value) {
+      if (value is Map) {
+        return MapEntry(key.toString(), deepCast(value));
+      } else if (value is List) {
+        return MapEntry(
+          key.toString(),
+          value.map((e) => e is Map ? deepCast(e) : e).toList(),
+        );
+      } else {
+        return MapEntry(key.toString(), value);
+      }
+    });
+  }
+
+
 
   // room stream
-  Stream<RoomModel> roomStream(String roomId){
-    try{
-      final docRef = firestore.collection("rooms").doc(roomId);
-
-      return docRef.snapshots().map((docRef){
-        if(docRef.exists){
-          return RoomModel.fromJson(docRef.data() as Map<String ,dynamic>);
-        }else{
-          throw Exception("Room not found");
-        }
-      });
-    }catch(e){
-      throw Exception(e);
-    }
-
+  Stream<RoomModel> roomStream(String roomId) {
+    final roomRef = db.child("rooms/$roomId");
+    return roomRef.onValue.map((event) {
+      final data = event.snapshot.value as Map<dynamic, dynamic>?;
+      if (data != null) {
+        return RoomModel.fromJson(Map<String, dynamic>.from(data));
+      } else {
+        throw Exception("Room not found");
+      }
+    });
   }
-
-
 
 
 

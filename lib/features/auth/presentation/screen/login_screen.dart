@@ -59,7 +59,7 @@ class _LoginScreenState extends State<LoginScreen> {
       listener: (context, state) {
         if (state.status.isSuccess) {
           Navigator.of(context).pushReplacement(
-            MaterialPageRoute(builder: (context) => const RoomHomeScreen()),
+            MaterialPageRoute(builder: (context) => const HomeScreen()),
           );
         }
       },

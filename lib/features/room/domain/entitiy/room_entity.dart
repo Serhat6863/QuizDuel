@@ -10,7 +10,6 @@ class RoomEntity {
   final DateTime createdAt;
   final int maxPlayers;
   final String quizId;
-  final bool isHost;
 
   RoomEntity({
     required this.roomName,
@@ -22,6 +21,5 @@ class RoomEntity {
     required this.joinCode,
     required this.maxPlayers,
     required this.quizId,
-    required this.isHost,
   });
 }

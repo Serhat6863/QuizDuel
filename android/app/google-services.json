@@ -1,6 +1,7 @@
 {
   "project_info": {
     "project_number": "54354744509",
+    "firebase_url": "https://quizduel-b3a50-default-rtdb.europe-west1.firebasedatabase.app",
     "project_id": "quizduel-b3a50",
     "storage_bucket": "quizduel-b3a50.firebasestorage.app"
   },

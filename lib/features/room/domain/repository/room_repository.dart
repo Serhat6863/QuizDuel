@@ -8,4 +8,5 @@ abstract class RoomRepository{
   Future<void> deleteRoom(String roomId);
   Future <List<RoomEntity>> getAvailableRooms();
   Stream<RoomEntity> roomStream(String roomId);
+  Future<void> autoDeleteRoom(String roomId);
 }

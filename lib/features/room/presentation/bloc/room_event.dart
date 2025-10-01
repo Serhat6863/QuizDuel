@@ -2,87 +2,52 @@ import 'package:equatable/equatable.dart';
 import 'package:quizduel/features/auth/domain/entity/user_entity.dart';
 import 'package:quizduel/features/room/domain/entitiy/room_entity.dart';
 
-abstract class RoomEvent extends Equatable{
+abstract class RoomEvent extends Equatable {
   @override
   List<Object?> get props => [];
 }
 
-
-class CreateRoomEvent extends RoomEvent{
+class CreateRoomEvent extends RoomEvent {
   final RoomEntity roomEntity;
-
-  CreateRoomEvent({
-    required this.roomEntity
-  });
+  CreateRoomEvent({required this.roomEntity});
 
   @override
   List<Object?> get props => [roomEntity];
 }
 
-
-class JoinRoomEvent extends RoomEvent{
+class JoinRoomEvent extends RoomEvent {
   final String roomId;
   final UserEntity userEntity;
-
-  JoinRoomEvent({
-    required this.roomId,
-    required this.userEntity,
-  });
+  JoinRoomEvent({required this.roomId, required this.userEntity});
 
   @override
   List<Object?> get props => [roomId, userEntity];
 }
 
-class LeaveRoomEvent extends RoomEvent{
+class LeaveRoomEvent extends RoomEvent {
   final String roomId;
   final UserEntity userEntity;
-
-  LeaveRoomEvent({
-    required this.roomId,
-    required this.userEntity,
-  });
+  LeaveRoomEvent({required this.roomId, required this.userEntity});
 
   @override
   List<Object?> get props => [roomId, userEntity];
 }
 
-class DeleteRoomEvent extends RoomEvent{
+class DeleteRoomEvent extends RoomEvent {
   final String roomId;
-
-  DeleteRoomEvent({
-    required this.roomId,
-  });
+  DeleteRoomEvent({required this.roomId});
 
   @override
   List<Object?> get props => [roomId];
 }
 
-class FetchAvailableRoomsEvent extends RoomEvent{
-  FetchAvailableRoomsEvent();
+class FetchAvailableRoomsEvent extends RoomEvent {}
 
-  @override
-  List<Object?> get props => [];
-}
-
-class ListRoomEvent extends RoomEvent{
+/// 🔥 Nouveau : écouter une room en temps réel
+class ListenRoomEvent extends RoomEvent {
   final String roomId;
-
-  ListRoomEvent({
-    required this.roomId,
-  });
+  ListenRoomEvent({required this.roomId});
 
   @override
   List<Object?> get props => [roomId];
-}
-
-
-class FetchUsernameEvent extends RoomEvent{
-  final List<UserEntity> userEntitys;
-
-  FetchUsernameEvent({
-    required this.userEntitys,
-  });
-
-  @override
-  List<Object?> get props => [userEntitys];
 }

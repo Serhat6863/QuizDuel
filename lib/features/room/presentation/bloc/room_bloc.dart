@@ -9,25 +9,33 @@ class RoomBloc extends Bloc<RoomEvent, RoomState> {
   final UserRepository userRepository;
 
   RoomBloc({required this.roomRepository, required this.userRepository})
-    : super(RoomState.initial()) {
+      : super(RoomState.initial()) {
     on<CreateRoomEvent>(_onCreateRoom);
     on<JoinRoomEvent>(_onJoinRoom);
     on<LeaveRoomEvent>(_onLeaveRoom);
     on<DeleteRoomEvent>(_onDeleteRoom);
     on<FetchAvailableRoomsEvent>(_onFetchAvailableRooms);
 
+    /// 🔥 écoute temps réel
+    on<ListenRoomEvent>(_onListenRoom);
   }
 
   Future<void> _onCreateRoom(
-    CreateRoomEvent event,
-    Emitter<RoomState> emit,
-  ) async {
+      CreateRoomEvent event,
+      Emitter<RoomState> emit,
+      ) async {
     emit(RoomState.loading());
     try {
       // 1. Create the room
       final room = await roomRepository.createRoom(event.roomEntity);
 
       if (room != null) {
+        // 2. Vérifie si le créateur est bien l’host
+        final currentUser = await userRepository.getCurrentUser();
+        if (currentUser != null && room.hostId == currentUser.id) {
+          await roomRepository.autoDeleteRoom(room.roomId);
+        }
+
         emit(RoomState.roomCreated(room));
       } else {
         emit(RoomState.error("Failed to create room"));
@@ -40,33 +48,23 @@ class RoomBloc extends Bloc<RoomEvent, RoomState> {
   Future<void> _onJoinRoom(JoinRoomEvent event, Emitter<RoomState> emit) async {
     emit(RoomState.loading());
     try {
-      // 1. Join the room
+      // 1. On ajoute l'utilisateur
       await roomRepository.joinRoom(event.roomId, event.userEntity);
 
-      // 2. Fetch the updated room details
-      final rooms = await roomRepository.getAvailableRooms();
-      final joinsRoom = rooms.firstWhere((r) => r.roomId == event.roomId);
-
-      // 3. Emit the updated room state
-      emit(RoomState.roomCreated(joinsRoom));
+      // 2. On commence à écouter la room en temps réel
+      add(ListenRoomEvent(roomId: event.roomId));
     } catch (e) {
       emit(RoomState.error(e.toString()));
     }
   }
 
+
   Future<void> _onLeaveRoom(
-    LeaveRoomEvent event,
-    Emitter<RoomState> emit,
-  ) async {
+      LeaveRoomEvent event, Emitter<RoomState> emit) async {
     emit(RoomState.loading());
     try {
-      // 1. Leave the room
       await roomRepository.leaveRoom(event.roomId, event.userEntity);
-
-      // 2. Fetch the updated list of available rooms
       final rooms = await roomRepository.getAvailableRooms();
-
-      // 3. Emit the updated rooms state
       emit(RoomState.roomLoaded(rooms));
     } catch (e) {
       emit(RoomState.error(e.toString()));
@@ -74,18 +72,11 @@ class RoomBloc extends Bloc<RoomEvent, RoomState> {
   }
 
   Future<void> _onDeleteRoom(
-    DeleteRoomEvent event,
-    Emitter<RoomState> emit,
-  ) async {
+      DeleteRoomEvent event, Emitter<RoomState> emit) async {
     emit(RoomState.loading());
     try {
-      // 1. Delete the room
       await roomRepository.deleteRoom(event.roomId);
-
-      // 2. Fetch the updated list of available rooms
       final rooms = await roomRepository.getAvailableRooms();
-
-      // 3. Emit the updated rooms state
       emit(RoomState.roomLoaded(rooms));
     } catch (e) {
       emit(RoomState.error(e.toString()));
@@ -93,20 +84,23 @@ class RoomBloc extends Bloc<RoomEvent, RoomState> {
   }
 
   Future<void> _onFetchAvailableRooms(
-    FetchAvailableRoomsEvent event,
-    Emitter<RoomState> emit,
-  ) async {
+      FetchAvailableRoomsEvent event, Emitter<RoomState> emit) async {
     emit(RoomState.loading());
     try {
-      // 1. Fetch the available rooms
       final rooms = await roomRepository.getAvailableRooms();
-
-      // 2. Emit the loaded rooms state
       emit(RoomState.roomLoaded(rooms));
     } catch (e) {
       emit(RoomState.error(e.toString()));
     }
   }
 
-
+  /// 🔥 gestion du stream temps réel
+  Future<void> _onListenRoom(
+      ListenRoomEvent event, Emitter<RoomState> emit) async {
+    await emit.forEach(
+      roomRepository.roomStream(event.roomId),
+      onData: (room) => RoomState.roomCreated(room),
+      onError: (error, _) => RoomState.error(error.toString()),
+    );
+  }
 }

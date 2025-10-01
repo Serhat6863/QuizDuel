@@ -1,3 +1,4 @@
+import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -21,6 +22,13 @@ import 'firebase_options.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+
+
+  final db = FirebaseDatabase.instance.ref();
+
+
+
+
 
   final firebaseUserService = FirebaseUserService();
   final firebaseRoomService = FirebaseRoomService();
@@ -78,7 +86,7 @@ class MyApp extends StatelessWidget {
                 body: Center(child: CircularProgressIndicator()),
               );
             } else if (state.status.isAuthenticated) {
-              return const RoomHomeScreen();
+              return const HomeScreen();
             } else if (state.status.isUnauthenticated) {
               return const LoginScreen();
             }
