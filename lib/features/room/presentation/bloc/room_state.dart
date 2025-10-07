@@ -3,15 +3,12 @@ import 'package:quizduel/features/room/domain/entitiy/room_entity.dart';
 
 enum RoomStatus {
   initial,
-
-  // 👇 On sépare les loadings
-  loadingRooms,     // quand on fetch la liste des rooms
-  creatingRoom,     // quand on crée une room
-  joiningRoom,      // quand on rejoint une room
-  gameLoading,     // quand on charge la game (quiz)
-
-  loaded,           // rooms chargées
-  roomCreated,      // room créée
+  loadingRooms,
+  creatingRoom,
+  joiningRoom,
+  gameLoading,
+  loaded,
+  roomCreated,
   gameStarted,
   playersUpdated,
   deleted,
@@ -48,18 +45,10 @@ class RoomState {
     this.players,
   });
 
-  // 🔹 états de base
   factory RoomState.initial() => const RoomState(status: RoomStatus.initial);
-
-  // 🔹 rooms disponibles (liste)
-  factory RoomState.loadingRooms() =>
-      const RoomState(status: RoomStatus.loadingRooms);
-
-  factory RoomState.creatingRoom() =>
-      const RoomState(status: RoomStatus.creatingRoom);
-
-  factory RoomState.joiningRoom() =>
-      const RoomState(status: RoomStatus.joiningRoom);
+  factory RoomState.loadingRooms() => const RoomState(status: RoomStatus.loadingRooms);
+  factory RoomState.creatingRoom() => const RoomState(status: RoomStatus.creatingRoom);
+  factory RoomState.joiningRoom() => const RoomState(status: RoomStatus.joiningRoom);
 
   factory RoomState.gameLoading(RoomEntity room) => RoomState(
     status: RoomStatus.gameLoading,
@@ -71,21 +60,18 @@ class RoomState {
     availableRooms: rooms,
   );
 
-  // 🔹 room en cours
   factory RoomState.roomCreated(RoomEntity room) => RoomState(
     status: RoomStatus.roomCreated,
     currentRoom: room,
   );
 
 
+  factory RoomState.gameStarted(RoomEntity room) => RoomState(
+    status: RoomStatus.gameStarted,
+    currentRoom: room,
+  );
 
-  factory RoomState.gameStarted() => const RoomState(status: RoomStatus.gameStarted);
-
-
-
-  factory RoomState.roomDeleted() =>
-      const RoomState(status: RoomStatus.deleted);
-
+  factory RoomState.roomDeleted() => const RoomState(status: RoomStatus.deleted);
   factory RoomState.roomLeft() => const RoomState(status: RoomStatus.initial);
 
   factory RoomState.playersUpdated(List<UserEntity> players) => RoomState(

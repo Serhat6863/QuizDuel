@@ -1,6 +1,6 @@
+import 'package:firebase_database/firebase_database.dart';
 import 'package:quizduel/core/utils/logger.dart';
 import 'package:quizduel/features/auth/data/model/user_model.dart';
-import 'package:firebase_database/firebase_database.dart';
 import 'package:quizduel/features/room/domain/enums/room_game_status.dart';
 import '../model/room_model.dart';
 
@@ -15,7 +15,7 @@ class FirebaseRoomService {
       final roomRef = db.child("rooms").push();
       final roomId = roomRef.key ?? "unknown";
 
-      logger.d("Génération d’un nouvel ID de room: $roomId");
+      logger.d("🆔 Génération d’un nouvel ID de room: $roomId");
 
       // 🔄 Conversion des users
       final Map<String, dynamic> userData = {
@@ -35,7 +35,7 @@ class FirebaseRoomService {
         ...room.toJson(),
         "roomId": roomId,
         "user": userData,
-        "isHost": true,
+        "status": "waiting", // ✅ status initial
         "createdAt": DateTime.now().toIso8601String(),
       };
 
@@ -51,7 +51,7 @@ class FirebaseRoomService {
   }
 
   // ✅ AUTO DELETE ON DISCONNECT
-  Future<void> setAutoDeleteOndisconnect(String roomId) async {
+  Future<void> setAutoDeleteOnDisconnect(String roomId) async {
     try {
       logger.i("⚙️ Configuration de la suppression auto pour $roomId");
       final roomRef = db.child("rooms/$roomId");
@@ -144,23 +144,6 @@ class FirebaseRoomService {
     });
   }
 
-  // ✅ ROOM STREAM
-  Stream<RoomModel?> roomStream(String roomId) {
-    final roomRef = db.child("rooms/$roomId");
-    logger.d("👂 Initialisation du stream de room: $roomId");
-
-    return roomRef.onValue.map((event) {
-      final data = event.snapshot.value as Map<dynamic, dynamic>?;
-      if (data != null) {
-        logger.t("📶 Mise à jour des données de la room $roomId");
-        return RoomModel.fromJson(Map<String, dynamic>.from(data));
-      } else {
-        logger.w("⚠️ Room supprimée côté Firebase: $roomId");
-        return null;
-      }
-    });
-  }
-
   // ✅ PLAYER LIST STREAM
   Stream<List<UserModel>> playerListStream(String roomId) {
     final usersRef = db.child("rooms/$roomId/user");
@@ -182,31 +165,34 @@ class FirebaseRoomService {
     });
   }
 
+  // ✅ STATUS STREAM (corrigé)
+  Stream<RoomGameStatus> roomStatusStream(String roomId) {
+    try {
+      final statusRef = db.child("rooms/$roomId/status"); // ✅ corrigé ici
+      logger.d("👂 Stream du status actif pour la room $roomId");
 
-  Stream<RoomGameStatus> roomStatusStream(String roomId){
-    try{
-      final statusRef = db.child("rooms/$roomId/status}");
-      logger.d("👂 Stream du status de la room $roomId");
       return statusRef.onValue.map((event) {
-        final status = event.snapshot.value?.toString() ?? 'waiting';
-        logger.t("🔄 Status de la room $roomId mis à jour: $status");
-        return RoomGameStatusX.fromString(status);
+        final rawStatus = event.snapshot.value?.toString() ?? 'waiting';
+        logger.i("🎯 Status mis à jour pour $roomId → $rawStatus");
+        return RoomGameStatusX.fromString(rawStatus);
       });
-    }catch(e){
-      logger.e("❌ Erreur lors du stream du status de la room $roomId: $e", error: e);
+    } catch (e, s) {
+      logger.e("❌ Erreur lors du stream du status de la room $roomId: $e",
+          error: e, stackTrace: s);
       throw Exception("Erreur room status stream: $e");
     }
   }
 
-
-  Future<void> startGame(String roomId) async{
-    try{
+  // ✅ START GAME
+  Future<void> startGame(String roomId) async {
+    try {
       logger.i("▶️ Démarrage du jeu dans la room $roomId");
       final statusRef = db.child("rooms/$roomId/status");
       await statusRef.set(RoomGameStatus.playing.toShortString());
-      logger.i("✅ Jeu démarré dans la room $roomId");
-    }catch(e){
-      logger.e("❌ Erreur lors du démarrage du jeu dans la room $roomId: $e", error: e);
+      logger.i("🔥 Status mis à jour dans Firebase → ${RoomGameStatus.playing.toShortString()}");
+    } catch (e, s) {
+      logger.e("❌ Erreur lors du démarrage du jeu dans la room $roomId: $e",
+          error: e, stackTrace: s);
       throw Exception("Erreur start game: $e");
     }
   }

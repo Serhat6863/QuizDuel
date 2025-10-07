@@ -8,7 +8,7 @@ abstract class RoomRepository{
   Future<void> leaveRoom(String roomId , UserEntity user);
   Future<void> deleteRoom(String roomId);
   Future <List<RoomEntity>> getAvailableRooms();
-  Stream<RoomEntity?> roomStream(String roomId);
+
   Future<void> autoDeleteRoom(String roomId);
   Stream<List<UserEntity>> playersStream(String roomId);
   Stream<RoomGameStatus> roomStatusStream(String roomId);

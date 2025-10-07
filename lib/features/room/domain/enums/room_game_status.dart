@@ -17,12 +17,12 @@ extension RoomGameStatusX on RoomGameStatus {
     switch (status) {
       case 'waiting':
         return RoomGameStatus.waiting;
-      case 'inProgress':
+      case 'playing':
         return RoomGameStatus.playing;
       case 'finished':
         return RoomGameStatus.finished;
       default:
-        return RoomGameStatus.waiting; // Valeur par défaut
+        return RoomGameStatus.waiting;
     }
   }
 }

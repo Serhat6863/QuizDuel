@@ -72,10 +72,10 @@ class _RoomScreenState extends State<RoomScreen> {
             context,
             MaterialPageRoute(builder : (context) => const HomeScreen()),
           );
-        }else if(state.status == RoomStatus.gameStarted){
+        }else if(state.status == RoomStatus.gameStarted && state.currentRoom != null){
           Navigator.pushReplacement(
             context,
-            MaterialPageRoute(builder : (context) =>  GameScreen(roomEntity: widget.roomEntity)),
+            MaterialPageRoute(builder : (context) =>  GameScreen(roomEntity: state.currentRoom!,)),
           );
         }
       },

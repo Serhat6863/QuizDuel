@@ -1,8 +1,16 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:quizduel/features/room/domain/entitiy/room_entity.dart';
+import 'package:quizduel/features/room/presentation/bloc/room_bloc.dart';
+import 'package:quizduel/features/room/presentation/bloc/room_event.dart';
+import 'package:quizduel/features/room/presentation/bloc/room_state.dart';
 import 'package:quizduel/features/room/presentation/screen/room_home_screen.dart';
 
 class WinnerScreen extends StatefulWidget {
-  const WinnerScreen({super.key});
+
+  final RoomEntity roomEntity;
+
+  const WinnerScreen({super.key, required this.roomEntity});
 
   @override
   State<WinnerScreen> createState() => _WinnerScreenState();
@@ -11,12 +19,7 @@ class WinnerScreen extends StatefulWidget {
 class _WinnerScreenState extends State<WinnerScreen> {
 
 
-  List<Map<String, dynamic>> rooms = [
-    {"name": "Serhat", "players": 2, "score": 150},
-    {"name": "Samet", "players": 4, "score": 200},
-    {"name": "Fikret", "players": 1 , "score": 100},
-    {"name": "Ahmet", "players": 3, "score": 250},
-  ];
+
 
 
   @override
@@ -67,80 +70,52 @@ class _WinnerScreenState extends State<WinnerScreen> {
                 ),
               ),
 
-
               const SizedBox(height: 20),
 
-              //faire une liste pour afficher les scores des joueurs en fontion du score celui qui a le plus de points en haut
-              Column(
-                children: rooms.map((room) {
-                  return Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 5, horizontal: 40),
-                    child: Container(
-                      padding: const EdgeInsets.all(15),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(12),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.grey.withOpacity(0.3),
-                            spreadRadius: 2,
-                            blurRadius: 5,
-                            offset: const Offset(0, 3),
-                          ),
-                        ],
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(
-                            room["name"],
-                            style: const TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          Text(
-                            "Score: ${room["score"]}",
-                            style: const TextStyle(
-                              fontSize: 16,
-                              color: Colors.grey,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  );
-                }).toList(),
+              //winner + score and after second and third and fourth
+              Text(
+                "${widget.roomEntity.user.first.username} with ${widget.roomEntity.user.first.score} points",
+                style: const TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w500,
+                  color: Colors.black87,
+                ),
               ),
-
 
               const SizedBox(height: 100,),
 
 
-              ElevatedButton(
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => const HomeScreen()),
-                  );
+              BlocListener<RoomBloc,RoomState>(
+                listener: (context, state){
+                  if(state.status == RoomStatus.deleted){
+                    Navigator.of(context).pushAndRemoveUntil(
+                      MaterialPageRoute(builder: (context) => const HomeScreen())
+                      , (route) => false
+                    );
+                  }
                 },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.blue.shade400,
-                  padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 15),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(30),
-                  ),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Text(
-                      "Home",
-                      style: TextStyle(fontSize: 18, color: Colors.white),
+                child: ElevatedButton(
+                  onPressed: () {
+                    context.read<RoomBloc>().add(DeleteRoomEvent(roomId: widget.roomEntity.roomId));
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.blue.shade400,
+                    padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 15),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(30),
                     ),
-                    const SizedBox(width: 10),
-                    Icon(Icons.home, color: Colors.white),
-                  ],
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Text(
+                        "Home",
+                        style: TextStyle(fontSize: 18, color: Colors.white),
+                      ),
+                      const SizedBox(width: 10),
+                      Icon(Icons.home, color: Colors.white),
+                    ],
+                  ),
                 ),
               ),
             ],

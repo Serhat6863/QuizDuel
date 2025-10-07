@@ -120,26 +120,13 @@ class RoomRepositoryImpl implements RoomRepository {
     }
   }
 
-  // ✅ ROOM STREAM
-  @override
-  Stream<RoomEntity?> roomStream(String roomId) {
-    try {
-      logger.d("👂 Initialisation du stream pour la room $roomId");
-      return firebaseRoomService
-          .roomStream(roomId)
-          .map((roomModel) => roomModel?.toEntity());
-    } catch (e, s) {
-      logger.e("❌ Erreur lors du stream de la room $roomId: $e", error: e, stackTrace: s);
-      throw Exception("Something went wrong while streaming room: $e");
-    }
-  }
 
   // ✅ AUTO DELETE
   @override
   Future<void> autoDeleteRoom(String roomId) async {
     try {
       logger.d("⚙️ Configuration de la suppression automatique pour $roomId");
-      await firebaseRoomService.setAutoDeleteOndisconnect(roomId);
+      await firebaseRoomService.setAutoDeleteOnDisconnect(roomId);
       logger.i("✅ Suppression automatique configurée pour $roomId");
     } catch (e, s) {
       logger.e("❌ Erreur suppression auto de la room $roomId: $e", error: e, stackTrace: s);

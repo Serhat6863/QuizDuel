@@ -164,30 +164,29 @@ class RoomBloc extends Bloc<RoomEvent, RoomState> {
   }
 
 
-  Future<void> _onListenStatus(ListenStatusEvent event , Emitter<RoomState> emit) async{
-    try{
+  Future<void> _onListenStatus(ListenStatusEvent event, Emitter<RoomState> emit) async {
+    try {
       logger.d("👂 Écoute en temps réel du status de la room ${event.roomId}");
       await emit.forEach<RoomGameStatus>(
         roomRepository.roomStatusStream(event.roomId),
         onData: (status) {
-          logger.d("📢 Status de la room ${event.roomId} mis à jour: $status");
-          if(status.isPlaying){
-            return state.copyWith(
-              status: RoomStatus.gameStarted,
-            );
-          }else{
+          logger.d("📢 Status de la room ${event.roomId} mis à jour: ${status}");
+
+          if (status.isPlaying) {
+            // ✅ On envoie la room actuelle dans le nouvel état
+            return RoomState.gameStarted(state.currentRoom!);
+          } else {
             return state;
           }
         },
         onError: (error, _) {
-          logger.e("❌ Erreur dans le stream du status de ${event.roomId}", error: error);
+          logger.e("❌ Erreur stream du status ${event.roomId}", error: error);
           return RoomState.error("Erreur stream status: ${error.toString()}");
         },
       );
-
-    }catch(e){
+    } catch (e) {
       logger.e("❌ Erreur dans le stream du status de ${event.roomId}", error: e);
-      return emit(RoomState.error("Erreur stream status: ${e.toString()}"));
+      emit(RoomState.error("Erreur stream status: ${e.toString()}"));
     }
   }
 

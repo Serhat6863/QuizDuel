@@ -7,7 +7,6 @@ class GameScreen extends StatefulWidget {
 
   final RoomEntity roomEntity;
 
-
   const GameScreen({super.key, required this.roomEntity});
 
   @override
@@ -15,11 +14,16 @@ class GameScreen extends StatefulWidget {
 }
 
 class _GameScreenState extends State<GameScreen> {
-  int score = 0;
-  int questionNumber = 1;
-  int totalQuestions = 10;
 
-  int timeLeft = 20; // temps en secondes
+
+
+  int score = 0;
+  int questionNumber = 0;
+  int totalQuestions = 10;
+  bool? isAnswerCorrect;
+  int? selectedAnswerIndex;
+
+  int timeLeft = 10; // temps en secondes
   Timer? timer;
 
   @override
@@ -28,9 +32,29 @@ class _GameScreenState extends State<GameScreen> {
     startTimer();
   }
 
+
+  void nextQuestion(){
+    if(questionNumber < totalQuestions -1){
+      setState(() {
+        questionNumber++;
+        selectedAnswerIndex = null;
+        isAnswerCorrect = null;
+      });
+      startTimer();
+    }else{
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (context) => WinnerScreen(roomEntity: widget.roomEntity,),
+        )
+      );
+    }
+  }
+
+
   void startTimer() {
     timer?.cancel(); // reset si déjà lancé
-    timeLeft = 20;
+    timeLeft = 10;
     timer = Timer.periodic(const Duration(seconds: 1), (t) {
       if (timeLeft > 0) {
         setState(() {
@@ -38,13 +62,7 @@ class _GameScreenState extends State<GameScreen> {
         });
       } else {
         t.cancel();
-        // ici tu peux déclencher "temps écoulé"
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text("Temps écoulé ⏳"),
-            backgroundColor: Colors.orange,
-          ),
-        );
+        nextQuestion();
       }
     });
   }
@@ -88,7 +106,7 @@ class _GameScreenState extends State<GameScreen> {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
-                      "Question $questionNumber / $totalQuestions",
+                      "Question ${questionNumber + 1} / $totalQuestions",
                       style: const TextStyle(color: Colors.white, fontSize: 16),
                     ),
                     Text(
@@ -121,8 +139,8 @@ class _GameScreenState extends State<GameScreen> {
                 )
               ],
             ),
-            child: const Text(
-              "Quelle est la capitale de la France ?",
+            child:  Text(
+              widget.roomEntity.quiz[questionNumber].question,
               textAlign: TextAlign.center,
               style: TextStyle(fontSize: 20, fontWeight: FontWeight.w600),
             ),
@@ -132,28 +150,19 @@ class _GameScreenState extends State<GameScreen> {
 
           // RÉPONSES
           Expanded(
-            child: ListView(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              children: [
-                _buildAnswerButton("Paris", true),
-                _buildAnswerButton("Londres", false),
-                _buildAnswerButton("Berlin", false),
-                _buildAnswerButton("Rome", false),
-              ],
-            ),
+            child: Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: ListView.builder(
+                itemCount: widget.roomEntity.quiz[questionNumber].options.length,
+                itemBuilder: (context, index){
+                  final answer = widget.roomEntity.quiz[questionNumber];
+                  final isCorrect = index == widget.roomEntity.quiz[questionNumber].correctAnswerIndex;
+                  return _buildAnswerButton(answer.options[index], isCorrect);
+                }
+              ),
+            )
           ),
-          
-          //button to go to winner Screen
-          IconButton(
-            onPressed: (){
-              Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => const WinnerScreen())
-              );
-            }, icon: Icon(Icons.navigate_next, color: Colors.black87,),
-          ),
-          
-          
+
 
           // TIMER EN BAS
           Padding(
@@ -168,7 +177,7 @@ class _GameScreenState extends State<GameScreen> {
                   ),
                 ),
                 LinearProgressIndicator(
-                  value: timeLeft / 20, // 1 → 0
+                  value: timeLeft / 10, // 1 → 0
                   backgroundColor: Colors.grey.shade300,
                   color: timeLeft > 5 ? Colors.blue : Colors.red,
                   minHeight: 10,
@@ -188,20 +197,18 @@ class _GameScreenState extends State<GameScreen> {
       child: ElevatedButton(
         onPressed: () {
           setState(() {
+            selectedAnswerIndex = widget.roomEntity.quiz[questionNumber].options.indexOf(text);
+            isAnswerCorrect = isCorrect;
             if (isCorrect) {
               score += 10;
             }
           });
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(isCorrect ? "Bonne réponse ✅" : "Mauvaise réponse ❌"),
-              backgroundColor: isCorrect ? Colors.green : Colors.red,
-            ),
-          );
-          startTimer(); // reset timer pour la prochaine question
+          // reset timer pour la prochaine question
         },
         style: ElevatedButton.styleFrom(
-          backgroundColor: Colors.blue.shade400,
+          backgroundColor: selectedAnswerIndex == widget.roomEntity.quiz[questionNumber].options.indexOf(text)
+              ? (isAnswerCorrect! ? Colors.green : Colors.red)
+              : Colors.blue,
           padding: const EdgeInsets.symmetric(vertical: 16),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
