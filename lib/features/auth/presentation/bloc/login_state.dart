@@ -1,3 +1,5 @@
+import 'package:quizduel/core/error/app_failure.dart';
+
 enum LoginStatus{
   initial,
   loading,
@@ -16,41 +18,40 @@ extension LoginStatusX on LoginStatus{
 
 class LoginState{
   final LoginStatus status;
-  final String message;
+  final AppFailure? failure;
 
-  LoginState({required this.status , required this.message});
+  LoginState({required this.status , this.failure});
 
 
   factory LoginState.initial() => LoginState(
     status: LoginStatus.initial,
-    message: '',
   );
 
   factory LoginState.loading() => LoginState(
     status: LoginStatus.loading,
-    message: '',
+
   );
 
   factory LoginState.success() => LoginState(
     status: LoginStatus.success,
-    message: '',
+
   );
 
-  factory LoginState.failure(String message) => LoginState(
+  factory LoginState.failure(AppFailure failure) => LoginState(
     status: LoginStatus.failure,
-    message: message,
+    failure: failure,
   );
 
   LoginState copyWith({
     LoginStatus? status,
-    String? message,
+    AppFailure? failure,
   }) {
     return LoginState(
       status: status ?? this.status,
-      message: message ?? this.message,
+      failure: failure ?? this.failure
     );
   }
 
 
-  List<Object?> get props => [status, message];
+  List<Object?> get props => [status, failure];
 }

@@ -1,5 +1,5 @@
 import 'package:bloc/bloc.dart';
-import 'package:quizduel/features/auth/data/repository/user_repository_impl.dart';
+import 'package:quizduel/core/error/app_failure.dart';
 import 'package:quizduel/features/auth/domain/repository/user_repository.dart';
 import 'package:quizduel/features/auth/presentation/bloc/register_event.dart';
 import 'package:quizduel/features/auth/presentation/bloc/register_state.dart';
@@ -20,7 +20,7 @@ class RegisterBloc extends Bloc<RegisterEvent, RegisterState>{
       emit(RegisterState.success());
 
     }catch(e){
-      emit(RegisterState.failure(e.toString()));
+      emit(RegisterState.failure(AppFailure(message: "Échec de l'inscription", code: e.toString())));
     }
   }
 }

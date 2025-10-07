@@ -1,3 +1,4 @@
+import 'package:quizduel/core/error/app_failure.dart';
 import 'package:quizduel/features/auth/domain/entity/user_entity.dart';
 
 enum AuthStatus {
@@ -18,53 +19,41 @@ extension AuthStatusX on AuthStatus {
 
 class AuthState {
   final AuthStatus status;
-  final String message;
   final UserEntity? user;
+  final AppFailure? failure;
 
   const AuthState({
     required this.status,
-    required this.message,
     this.user,
+    this.failure,
   });
 
   // Factories
-  factory AuthState.initial() => const AuthState(
-    status: AuthStatus.initial,
-    message: '',
-  );
+  factory AuthState.initial() => const AuthState(status: AuthStatus.initial);
 
-  factory AuthState.authenticated(UserEntity user) => AuthState(
-    status: AuthStatus.authenticated,
-    message: '',
-    user: user,
-  );
+  factory AuthState.authenticated(UserEntity user) =>
+      AuthState(status: AuthStatus.authenticated, user: user);
 
-  factory AuthState.unauthenticated() => const AuthState(
-    status: AuthStatus.unauthenticated,
-    message: '',
-  );
+  factory AuthState.unauthenticated() =>
+      const AuthState(status: AuthStatus.unauthenticated);
 
-  factory AuthState.loading() => const AuthState(
-    status: AuthStatus.loading,
-    message: '',
-  );
+  factory AuthState.loading() =>
+      const AuthState(status: AuthStatus.loading);
 
-  factory AuthState.failure(String message) => AuthState(
-    status: AuthStatus.failure,
-    message: message,
-  );
+  factory AuthState.failure(AppFailure failure) =>
+      AuthState(status: AuthStatus.failure, failure: failure);
 
   AuthState copyWith({
     AuthStatus? status,
-    String? message,
     UserEntity? user,
+    AppFailure? failure,
   }) {
     return AuthState(
       status: status ?? this.status,
-      message: message ?? this.message,
       user: user ?? this.user,
+      failure: failure ?? this.failure,
     );
   }
 
-  List<Object?> get props => [status, message, user];
+  List<Object?> get props => [status, user, failure];
 }

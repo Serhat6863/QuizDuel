@@ -1,5 +1,7 @@
-import '../../../auth/data/model/user_model.dart';
-import '../../domain/entitiy/room_entity.dart';
+import 'package:quizduel/features/auth/data/model/user_model.dart';
+import 'package:quizduel/features/game/data/model/quiz_model.dart';
+import 'package:quizduel/features/room/domain/entitiy/room_entity.dart';
+import 'package:quizduel/features/room/domain/enums/room_game_status.dart';
 
 class RoomModel extends RoomEntity {
   RoomModel({
@@ -11,7 +13,7 @@ class RoomModel extends RoomEntity {
     required super.joinCode,
     required super.createdAt,
     required super.maxPlayers,
-    required super.quizId,
+    required super.quiz,
   });
 
   factory RoomModel.fromJson(Map<dynamic, dynamic> json) {
@@ -26,13 +28,19 @@ class RoomModel extends RoomEntity {
         );
       }).toList()
           : [],
-      status: json['status']?.toString() ?? 'waiting',
+      status: RoomGameStatusX.fromString(json["status"]?.toString() ?? 'waiting'),
       joinCode: json['joinCode']?.toString() ?? '',
       createdAt: json['createdAt'] != null
           ? DateTime.tryParse(json['createdAt'].toString()) ?? DateTime.now()
           : DateTime.now(),
       maxPlayers: json['maxPlayers'] is int ? json['maxPlayers'] : 4,
-      quizId: json['quizId']?.toString() ?? '',
+
+      // ✅ Convertir les quiz stockés en JSON vers QuizModel
+      quiz: (json['quiz'] is List)
+          ? (json['quiz'] as List)
+          .map((q) => QuizModel.fromJson(Map<String, dynamic>.from(q)))
+          .toList()
+          : [],
     );
   }
 
@@ -44,17 +52,32 @@ class RoomModel extends RoomEntity {
       'hostId': hostId,
       'user': {
         for (var u in user)
-          u.id: (u is UserModel ? u.toJson() : UserModel(
+          u.id: (u is UserModel
+              ? u.toJson()
+              : UserModel(
             id: u.id,
             email: u.email,
             username: u.username,
+            isReady: u.isReady,
+            score: u.score,
           ).toJson())
       },
-      'status': status,
+      'status': status.toShortString(),
       'joinCode': joinCode,
       'createdAt': createdAt.toIso8601String(),
       'maxPlayers': maxPlayers,
-      'quizId': quizId,
+
+      // ✅ Transformer la liste de QuizEntity en JSON pour Firebase
+      'quiz': quiz.map((q) {
+        if (q is QuizModel) return q.toJson();
+        return {
+          'category': q.category,
+          'difficulty': q.difficulty,
+          'question': q.question,
+          'options': q.options,
+          'correctAnswerIndex': q.correctAnswerIndex,
+        };
+      }).toList(),
     };
   }
 
@@ -68,7 +91,7 @@ class RoomModel extends RoomEntity {
       joinCode: joinCode,
       createdAt: createdAt,
       maxPlayers: maxPlayers,
-      quizId: quizId,
+      quiz: quiz,
     );
   }
 }

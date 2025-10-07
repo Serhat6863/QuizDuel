@@ -1,3 +1,5 @@
+import 'package:quizduel/core/error/app_failure.dart';
+
 enum RegisterStatus { initial, loading, success, failure }
 
 
@@ -11,39 +13,39 @@ extension RegisterStatusX on RegisterStatus {
 
 class RegisterState {
   final RegisterStatus status;
-  final String message;
+  final AppFailure? failure;
 
-  RegisterState({required this.status, required this.message});
+  RegisterState({required this.status, this.failure});
 
   factory RegisterState.initial() => RegisterState(
         status: RegisterStatus.initial,
-        message: '',
+
       );
 
   factory RegisterState.loading() => RegisterState(
         status: RegisterStatus.loading,
-        message: '',
+
       );
 
   factory RegisterState.success() => RegisterState(
         status: RegisterStatus.success,
-        message: '',
+
       );
 
-  factory RegisterState.failure(String message) => RegisterState(
+  factory RegisterState.failure(AppFailure failure) => RegisterState(
         status: RegisterStatus.failure,
-        message: message,
+        failure: failure,
       );
 
   RegisterState copyWith({
     RegisterStatus? status,
-    String? message,
+    AppFailure? failure,
   }) {
     return RegisterState(
       status: status ?? this.status,
-      message: message ?? this.message,
+      failure: failure ?? this.failure,
     );
   }
 
-  List<Object?> get props => [status, message];
+  List<Object?> get props => [status, failure];
 }

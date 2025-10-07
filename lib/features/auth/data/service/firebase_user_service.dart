@@ -3,16 +3,14 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:quizduel/features/auth/data/model/user_model.dart';
 
 class FirebaseUserService {
-  // Implement Firebase user service methods here
-  FirebaseAuth auth = FirebaseAuth.instance;
-  FirebaseFirestore firestore = FirebaseFirestore.instance;
+  final FirebaseAuth auth = FirebaseAuth.instance;
+  final FirebaseFirestore firestore = FirebaseFirestore.instance;
 
-
-  //login with email and password
+  // login with email and password
   Future<UserModel?> signInWithEmailAndPassword(
-    String email,
-    String password,
-  ) async {
+      String email,
+      String password,
+      ) async {
     try {
       UserCredential userCredential = await auth.signInWithEmailAndPassword(
         email: email,
@@ -20,98 +18,92 @@ class FirebaseUserService {
       );
 
       final user = userCredential.user;
-
       if (user != null) {
+        // Récupère les infos Firestore pour avoir username, score, etc
+        final doc = await firestore.collection("users").doc(user.uid).get();
+        if (doc.exists) {
+          return UserModel.fromJson(doc.data() as Map<String, dynamic>);
+        }
+
+        // fallback
         return UserModel(
           id: user.uid,
           email: user.email ?? '',
           username: user.displayName ?? '',
+          isReady: false,
+          score: 0,
         );
       }
-
-
-
       return null;
     } on FirebaseAuthException catch (e) {
       throw Exception(_mapFirebaseError(e));
     }
   }
 
-  //register with email and password
-
+  // register
   Future<UserModel?> registerWithEmailAndPassword(
-    String email,
-    String username,
-    String password,
-  ) async {
+      String email,
+      String username,
+      String password,
+      ) async {
     try {
-      UserCredential userCredential = await auth.createUserWithEmailAndPassword(
-        email: email,
-        password: password,
-      );
+      UserCredential userCredential =
+      await auth.createUserWithEmailAndPassword(email: email, password: password);
 
       await userCredential.user?.updateDisplayName(username);
 
       final user = userCredential.user;
-      if (user == null) {
-        return null;
-      }
+      if (user == null) return null;
 
       final userModel = UserModel(
         id: user.uid,
         email: user.email ?? '',
-        username: user.displayName ?? '',
+        username: username,
+        isReady: false,
+        score: 0,
       );
 
-      await firestore.collection('users').doc(user.uid).set({
-        'id': user.uid,
-        'email': user.email,
-        'username': username,
-        'isReady': false,
-        'score': 0,
-      });
-
-
+      await firestore.collection('users').doc(user.uid).set(userModel.toJson());
       return userModel;
-
     } on FirebaseAuthException catch (e) {
       throw Exception(_mapFirebaseError(e));
     }
   }
 
-  //sign out
+  // sign out
   Future<void> signOut() async {
     await auth.signOut();
-
   }
 
-
-  //get current user
-  Future<UserModel?> getCurrentUser() async{
+  // get current user
+  Future<UserModel?> getCurrentUser() async {
     final user = auth.currentUser;
-    if(user != null){
+    if (user != null) {
+      final doc = await firestore.collection("users").doc(user.uid).get();
+      if (doc.exists) {
+        return UserModel.fromJson(doc.data() as Map<String, dynamic>);
+      }
       return UserModel(
         id: user.uid,
         email: user.email ?? '',
         username: user.displayName ?? '',
+        isReady: false,
+        score: 0,
       );
     }
     return null;
   }
 
-
-  //get username by id
-  Future<String> getUsernameById(String userId) async{
-    try{
+  // get username by id
+  Future<String> getUsernameById(String userId) async {
+    try {
       final doc = await firestore.collection("users").doc(userId).get();
-      if(doc.exists){
-        final data = doc.data() as Map<String , dynamic>;
-        return data["username"] ?? "";
-      }else{
+      if (doc.exists) {
+        return doc.data()?["username"] ?? "";
+      } else {
         throw Exception("User not found");
       }
-
-    }catch(e){
+    } catch (e) {
       throw Exception(e);
     }
   }

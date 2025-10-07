@@ -7,6 +7,7 @@ abstract class RoomEvent extends Equatable {
   List<Object?> get props => [];
 }
 
+// 🔹 Création d’une room
 class CreateRoomEvent extends RoomEvent {
   final RoomEntity roomEntity;
   CreateRoomEvent({required this.roomEntity});
@@ -15,6 +16,7 @@ class CreateRoomEvent extends RoomEvent {
   List<Object?> get props => [roomEntity];
 }
 
+// 🔹 Rejoindre une room
 class JoinRoomEvent extends RoomEvent {
   final String roomId;
   final UserEntity userEntity;
@@ -24,6 +26,7 @@ class JoinRoomEvent extends RoomEvent {
   List<Object?> get props => [roomId, userEntity];
 }
 
+// 🔹 Quitter une room
 class LeaveRoomEvent extends RoomEvent {
   final String roomId;
   final UserEntity userEntity;
@@ -33,6 +36,7 @@ class LeaveRoomEvent extends RoomEvent {
   List<Object?> get props => [roomId, userEntity];
 }
 
+// 🔹 Supprimer une room (host seulement)
 class DeleteRoomEvent extends RoomEvent {
   final String roomId;
   DeleteRoomEvent({required this.roomId});
@@ -41,9 +45,10 @@ class DeleteRoomEvent extends RoomEvent {
   List<Object?> get props => [roomId];
 }
 
+// 🔹 Charger toutes les rooms disponibles
 class FetchAvailableRoomsEvent extends RoomEvent {}
 
-/// 🔥 Nouveau : écouter une room en temps réel
+// 🔹 Écouter en temps réel une room spécifique
 class ListenRoomEvent extends RoomEvent {
   final String roomId;
   ListenRoomEvent({required this.roomId});
@@ -51,3 +56,31 @@ class ListenRoomEvent extends RoomEvent {
   @override
   List<Object?> get props => [roomId];
 }
+
+
+class ListenPlayersEvent extends RoomEvent {
+  final String roomId;
+  ListenPlayersEvent({required this.roomId});
+
+  @override
+  List<Object?> get props => [roomId];
+}
+
+class ListenStatusEvent extends RoomEvent {
+  final String roomId;
+  ListenStatusEvent({required this.roomId});
+
+  @override
+  List<Object?> get props => [roomId];
+}
+
+
+class StartGameEvent extends RoomEvent {
+  final String roomId;
+  StartGameEvent({required this.roomId});
+
+  @override
+  List<Object?> get props => [roomId];
+}
+
+
