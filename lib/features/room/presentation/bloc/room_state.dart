@@ -9,6 +9,7 @@ enum RoomStatus {
   gameLoading,
   updatingScore,
   fetchingRoomById,
+  fetchingAllUsers,
 
   loaded,
   roomCreated,

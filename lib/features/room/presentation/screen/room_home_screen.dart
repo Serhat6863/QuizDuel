@@ -1,3 +1,4 @@
+import 'dart:ui';
 import 'package:awesome_snackbar_content/awesome_snackbar_content.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -10,6 +11,7 @@ import 'package:quizduel/features/room/data/model/room_model.dart';
 import 'package:quizduel/features/room/domain/enums/room_game_status.dart';
 import 'package:quizduel/features/room/presentation/bloc/room_bloc.dart';
 import 'package:quizduel/features/room/presentation/bloc/room_event.dart';
+import 'package:quizduel/features/room/presentation/screen/leaderboard_screen.dart';
 import 'package:quizduel/features/room/presentation/screen/room_list_screen.dart';
 import 'package:quizduel/features/room/presentation/screen/room_screen.dart';
 import 'package:quizduel/features/room/presentation/widget/build_menu_card.dart';
@@ -90,12 +92,9 @@ class _HomeScreenState extends State<HomeScreen> {
     final user = context.read<AuthBloc>().state.user!;
     final quizState = context.read<QuizBloc>().state;
 
-    logger.i("Tentative de création de room ${roomName} par ${user.username}");
-
-
+    logger.i("Tentative de création de room $roomName par ${user.username}");
 
     if (quizState.status.isLoaded && quizState.quizzes.isNotEmpty) {
-      logger.d("Création de la room avec ${quizState.quizzes.length} quiz");
       context.read<RoomBloc>().add(
         CreateRoomEvent(
           roomEntity: RoomModel(
@@ -113,7 +112,6 @@ class _HomeScreenState extends State<HomeScreen> {
       );
       _closeDialog(context);
     } else {
-      logger.w("Échec de la création de la room : aucun quiz chargé");
       final snackBar = SnackBar(
         elevation: 0,
         behavior: SnackBarBehavior.floating,
@@ -134,215 +132,185 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     final user = context.read<AuthBloc>().state.user;
 
-    return MultiBlocListener(
-      listeners: [
-        BlocListener<RoomBloc, RoomState>(
-          listenWhen: (prev, curr) => prev.status != curr.status,
-          listener: (context, state) {
-            if (state.status == RoomStatus.creatingRoom) {
-              _showLoadingDialog(context, "Création de la room...");
-            } else if (state.status.isRoomCreated && state.currentRoom != null) {
-              _closeDialog(context);
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => RoomScreen(roomEntity: state.currentRoom!),
-                ),
-              );
-            } else if (state.status.isError) {
-              _closeDialog(context);
-              final snackBar = SnackBar(
-                elevation: 0,
-                behavior: SnackBarBehavior.floating,
-                backgroundColor: Colors.transparent,
-                content: AwesomeSnackbarContent(
-                  title: 'Erreur',
-                  message: state.errorMessage ?? "Une erreur est survenue",
-                  contentType: ContentType.failure,
-                ),
-              );
-              ScaffoldMessenger.of(context)
-                ..hideCurrentSnackBar()
-                ..showSnackBar(snackBar);
-            }
-          },
-        ),
-        BlocListener<QuizBloc, QuizState>(
-          listener: (context, quizState) {
-            if (quizState.status.isLoading) {
-              _showLoadingDialog(context, "Chargement du quiz...");
-            } else if (quizState.status.isLoaded) {
-              _closeDialog(context);
-              final roomName = _roomNameController.text.trim();
-              if (roomName.isNotEmpty) {
-                _createRoom(context, roomName);
-              }
-            } else if (quizState.status.isError) {
-              _closeDialog(context);
-              final snackBar = SnackBar(
-                elevation: 0,
-                behavior: SnackBarBehavior.floating,
-                backgroundColor: Colors.transparent,
-                content: AwesomeSnackbarContent(
-                  title: 'Erreur',
-                  message: quizState.message ??
-                      "Impossible de charger les quiz 😢",
-                  contentType: ContentType.failure,
-                ),
-              );
-              ScaffoldMessenger.of(context)
-                ..hideCurrentSnackBar()
-                ..showSnackBar(snackBar);
-            }
-          },
-        ),
-      ],
-      child: Scaffold(
-        backgroundColor: const Color(0xFFF5E6C4),
-        body: Column(
-          children: [
-            // HEADER
-            Container(
-              padding: const EdgeInsets.only(
-                top: 50,
-                left: 20,
-                right: 20,
-                bottom: 30,
+    return Scaffold(
+      backgroundColor: const Color(0xFFF5E6C4),
+      body: Column(
+        children: [
+          // HEADER
+          Container(
+            padding:
+            const EdgeInsets.only(top: 50, left: 20, right: 20, bottom: 30),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  Colors.deepPurple.shade500,
+                  Colors.deepPurple.shade400,
+                ],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
               ),
-              decoration: BoxDecoration(
-                color: Colors.deepPurple.shade400,
-                borderRadius: const BorderRadius.only(
-                  bottomLeft: Radius.circular(30),
-                  bottomRight: Radius.circular(30),
-                ),
+              borderRadius: const BorderRadius.only(
+                bottomLeft: Radius.circular(30),
+                bottomRight: Radius.circular(30),
               ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // top bar
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Text(
-                        "QuizDuel",
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 26,
-                          fontWeight: FontWeight.bold,
-                        ),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // top bar
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text(
+                      "QuizDuel",
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 26,
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: 0.5,
                       ),
-                      Row(
-                        children: [
-                          Container(
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFF5E6C4), // même fond que ton app
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: IconButton(
-                              icon: const Icon(Icons.logout, color: Colors.black87),
-                              onPressed: () => context.read<AuthBloc>().add(LoggedOut()),
+                    ),
+                    Row(
+                      children: [
+                        // 🔹 Logout button — effet vitre moderne
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(14),
+                          child: BackdropFilter(
+                            filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
+                            child: Container(
+                              decoration: BoxDecoration(
+                                color: Colors.white.withOpacity(0.15),
+                                border: Border.all(
+                                  color: Colors.white.withOpacity(0.25),
+                                ),
+                                borderRadius: BorderRadius.circular(14),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withOpacity(0.15),
+                                    blurRadius: 6,
+                                    offset: const Offset(0, 3),
+                                  ),
+                                ],
+                              ),
+                              child: IconButton(
+                                icon: const Icon(
+                                  Icons.logout_rounded,
+                                  color: Colors.white,
+                                ),
+                                tooltip: "Se déconnecter",
+                                onPressed: () => context
+                                    .read<AuthBloc>()
+                                    .add(LoggedOut()),
+                              ),
                             ),
                           ),
+                        ),
+                        const SizedBox(width: 12),
+                        Text(
+                          user?.username ?? 'Invité',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 16,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
 
-                          const SizedBox(width: 10),
-                          Text(
-                            user?.username ?? 'Invité',
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 16,
-                            ),
+                const SizedBox(height: 25),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    BuildStatBox(
+                      label: "Rooms",
+                      value: context
+                          .read<RoomBloc>()
+                          .state
+                          .availableRooms
+                          .length,
+                    ),
+                    BuildStatBox(label: "Score", value: user?.score ?? 0),
+                  ],
+                ),
+              ],
+            ),
+          ),
+
+          const SizedBox(height: 20),
+
+          // BODY
+          Expanded(
+            child: ListView(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              children: [
+                BuildMenuCard(
+                  icon: Icons.list,
+                  title: "Voir les Rooms",
+                  color: Colors.amber.shade600,
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => const RoomListScreen(),
+                      ),
+                    );
+                  },
+                ),
+                BuildMenuCard(
+                  icon: Icons.add,
+                  title: "Créer une Room",
+                  color: Colors.green.shade600,
+                  onTap: () {
+                    showDialog(
+                      context: context,
+                      builder: (context) => AlertDialog(
+                        title: const Text("Nom de la Room"),
+                        content: TextField(
+                          controller: _roomNameController,
+                          decoration: const InputDecoration(
+                            hintText: "Entrez un nom",
+                          ),
+                        ),
+                        actions: [
+                          TextButton(
+                            onPressed: () => Navigator.pop(context),
+                            child: const Text("Annuler"),
+                          ),
+                          ElevatedButton(
+                            onPressed: () {
+                              final roomName =
+                              _roomNameController.text.trim();
+                              if (roomName.isNotEmpty) {
+                                context.read<QuizBloc>().add(FetchQuizEvent());
+                                Navigator.pop(context);
+                              }
+                            },
+                            child: const Text("Créer"),
                           ),
                         ],
                       ),
-                    ],
-                  ),
-                  const SizedBox(height: 25),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    children: [
-                      BuildStatBox(
-                        label: "Rooms",
-                        value: context.read<RoomBloc>().state.availableRooms.length,
+                    );
+                  },
+                ),
+                BuildMenuCard(
+                  icon: Icons.star,
+                  title: "Classement",
+                  color: Colors.blue.shade600,
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => const LeaderboardScreen(),
                       ),
-                      BuildStatBox(label: "Score", value: user?.score ?? 0),
-                    ],
-                  ),
-                ],
-              ),
+                    );
+                  },
+                ),
+              ],
             ),
-            const SizedBox(height: 20),
-            // BODY
-            Expanded(
-              child: ListView(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
-                children: [
-                  BuildMenuCard(
-                    icon: Icons.list,
-                    title: "Voir les Rooms",
-                    color: Colors.amber.shade600,
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => const RoomListScreen(),
-                        ),
-                      );
-                    },
-                  ),
-                  BuildMenuCard(
-                    icon: Icons.add,
-                    title: "Créer une Room",
-                    color: Colors.green.shade600,
-                    onTap: () {
-                      showDialog(
-                        context: context,
-                        builder: (context) => AlertDialog(
-                          title: const Text("Nom de la Room"),
-                          content: TextField(
-                            controller: _roomNameController,
-                            decoration: const InputDecoration(
-                              hintText: "Entrez un nom",
-                            ),
-                          ),
-                          actions: [
-                            TextButton(
-                              onPressed: () => Navigator.pop(context),
-                              child: const Text("Annuler"),
-                            ),
-                            ElevatedButton(
-                              onPressed: () {
-                                final roomName = _roomNameController.text.trim();
-                                if (roomName.isNotEmpty) {
-                                  context
-                                      .read<QuizBloc>()
-                                      .add(FetchQuizEvent());
-                                  Navigator.pop(context);
-                                }
-                              },
-                              child: const Text("Créer"),
-                            ),
-                          ],
-                        ),
-                      );
-                    },
-                  ),
-                  BuildMenuCard(
-                    icon: Icons.star,
-                    title: "Classement",
-                    color: Colors.blue.shade600,
-                    onTap: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text("Classement coming soon ⚡"),
-                        ),
-                      );
-                    },
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

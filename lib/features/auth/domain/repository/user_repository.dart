@@ -6,4 +6,5 @@ abstract class UserRepository {
   Future<void> signOut();
   Future<UserEntity?> getCurrentUser();
   Future<String> getUsernameById(String userId);
+  Future<List<UserEntity>> getAllUsers();
 }

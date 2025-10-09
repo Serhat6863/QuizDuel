@@ -108,6 +108,16 @@ class FirebaseUserService {
     }
   }
 
+
+  Future<List<UserModel>> getAllUser() async {
+    try{
+      final querySnapshot = await firestore.collection("users").get();
+      return querySnapshot.docs.map((doc) => UserModel.fromJson(doc.data())).toList();
+    }catch(e){
+      throw Exception("Error fetching users: $e");
+    }
+  }
+
   String _mapFirebaseError(FirebaseAuthException e) {
     switch (e.code) {
       case 'user-not-found':

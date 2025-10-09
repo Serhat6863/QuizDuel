@@ -18,6 +18,7 @@ import 'package:quizduel/features/game/domain/repository/quiz_repository.dart';
 import 'package:quizduel/features/game/presentation/bloc/quiz_bloc.dart';
 import 'package:quizduel/features/room/data/repository/room_repository_impl.dart';
 import 'package:quizduel/features/room/domain/repository/room_repository.dart';
+import 'package:quizduel/features/room/presentation/bloc/leader_bloc.dart';
 import 'package:quizduel/features/room/presentation/bloc/room_bloc.dart';
 import 'package:quizduel/features/room/presentation/screen/room_home_screen.dart';
 import 'features/auth/presentation/bloc/auth_state.dart';
@@ -87,6 +88,9 @@ class MyApp extends StatelessWidget {
         ),
         BlocProvider<QuizBloc>(
           create: (context) => QuizBloc(quizRepository: context.read<QuizRepository>()),
+        ),
+        BlocProvider<LeaderBloc>(
+          create: (context) => LeaderBloc(userRepository: context.read<UserRepository>()),
         )
       ],
       child: MaterialApp(
