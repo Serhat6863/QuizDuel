@@ -94,6 +94,9 @@ class MyApp extends StatelessWidget {
         )
       ],
       child: MaterialApp(
+        theme: ThemeData(
+          fontFamily: 'QuickSand',
+        ),
         debugShowCheckedModeBanner: false,
         title: 'Flutter Demo',
         home: BlocBuilder<AuthBloc, AuthState>(

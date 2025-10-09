@@ -2,6 +2,7 @@ import 'dart:ui';
 import 'package:awesome_snackbar_content/awesome_snackbar_content.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:quizduel/core/utils/logger.dart';
 import 'package:quizduel/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:quizduel/features/auth/presentation/bloc/auth_event.dart';
 import 'package:quizduel/features/game/presentation/bloc/quiz_bloc.dart';
@@ -11,13 +12,10 @@ import 'package:quizduel/features/room/data/model/room_model.dart';
 import 'package:quizduel/features/room/domain/enums/room_game_status.dart';
 import 'package:quizduel/features/room/presentation/bloc/room_bloc.dart';
 import 'package:quizduel/features/room/presentation/bloc/room_event.dart';
+import 'package:quizduel/features/room/presentation/bloc/room_state.dart';
 import 'package:quizduel/features/room/presentation/screen/leaderboard_screen.dart';
 import 'package:quizduel/features/room/presentation/screen/room_list_screen.dart';
 import 'package:quizduel/features/room/presentation/screen/room_screen.dart';
-import 'package:quizduel/features/room/presentation/widget/build_menu_card.dart';
-import 'package:quizduel/core/utils/logger.dart';
-import '../bloc/room_state.dart';
-import '../widget/build_stat_box.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -45,13 +43,12 @@ class _HomeScreenState extends State<HomeScreen> {
   void _showLoadingDialog(BuildContext context, String title) {
     if (_isDialogOpen) return;
     _isDialogOpen = true;
+
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (context) => Dialog(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
-        ),
+      builder: (_) => Dialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         backgroundColor: Colors.white,
         child: Padding(
           padding: const EdgeInsets.all(24),
@@ -132,185 +129,323 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     final user = context.read<AuthBloc>().state.user;
 
-    return Scaffold(
-      backgroundColor: const Color(0xFFF5E6C4),
-      body: Column(
-        children: [
-          // HEADER
-          Container(
-            padding:
-            const EdgeInsets.only(top: 50, left: 20, right: 20, bottom: 30),
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [
-                  Colors.deepPurple.shade500,
-                  Colors.deepPurple.shade400,
-                ],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-              borderRadius: const BorderRadius.only(
-                bottomLeft: Radius.circular(30),
-                bottomRight: Radius.circular(30),
-              ),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // top bar
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    const Text(
-                      "QuizDuel",
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 26,
-                        fontWeight: FontWeight.bold,
-                        letterSpacing: 0.5,
+    return MultiBlocListener(
+      listeners: [
+        BlocListener<RoomBloc, RoomState>(
+          listenWhen: (prev, curr) => prev.status != curr.status,
+          listener: (context, state) {
+            if (state.status == RoomStatus.creatingRoom) {
+              _showLoadingDialog(context, "Création de la room...");
+            } else if (state.status.isRoomCreated && state.currentRoom != null) {
+              _closeDialog(context);
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => RoomScreen(roomEntity: state.currentRoom!),
+                ),
+              );
+            } else if (state.status.isError) {
+              _closeDialog(context);
+              final snackBar = SnackBar(
+                elevation: 0,
+                behavior: SnackBarBehavior.floating,
+                backgroundColor: Colors.transparent,
+                content: AwesomeSnackbarContent(
+                  title: 'Erreur',
+                  message: state.errorMessage ?? "Une erreur est survenue",
+                  contentType: ContentType.failure,
+                ),
+              );
+              ScaffoldMessenger.of(context)
+                ..hideCurrentSnackBar()
+                ..showSnackBar(snackBar);
+            }
+          },
+        ),
+        BlocListener<QuizBloc, QuizState>(
+          listener: (context, quizState) {
+            if (quizState.status.isLoading) {
+              _showLoadingDialog(context, "Chargement du quiz...");
+            } else if (quizState.status.isLoaded) {
+              _closeDialog(context);
+              final roomName = _roomNameController.text.trim();
+              if (roomName.isNotEmpty) {
+                _createRoom(context, roomName);
+              }
+            } else if (quizState.status.isError) {
+              _closeDialog(context);
+              final snackBar = SnackBar(
+                elevation: 0,
+                behavior: SnackBarBehavior.floating,
+                backgroundColor: Colors.transparent,
+                content: AwesomeSnackbarContent(
+                  title: 'Erreur',
+                  message: quizState.message ??
+                      "Impossible de charger les quiz 😢",
+                  contentType: ContentType.failure,
+                ),
+              );
+              ScaffoldMessenger.of(context)
+                ..hideCurrentSnackBar()
+                ..showSnackBar(snackBar);
+            }
+          },
+        ),
+      ],
+      child: Scaffold(
+        backgroundColor: const Color(0xFFF5E6C4),
+        body: SafeArea(
+          child: SingleChildScrollView(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 18),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Header
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            "Hello,",
+                            style: TextStyle(
+                              color: Colors.deepPurple.shade400,
+                              fontSize: 18,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          Text(
+                            user?.username ?? 'Invité',
+                            style: const TextStyle(
+                              color: Colors.black,
+                              fontSize: 26,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
                       ),
-                    ),
-                    Row(
-                      children: [
-                        // 🔹 Logout button — effet vitre moderne
-                        ClipRRect(
-                          borderRadius: BorderRadius.circular(14),
-                          child: BackdropFilter(
-                            filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
-                            child: Container(
-                              decoration: BoxDecoration(
-                                color: Colors.white.withOpacity(0.15),
-                                border: Border.all(
-                                  color: Colors.white.withOpacity(0.25),
-                                ),
-                                borderRadius: BorderRadius.circular(14),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: Colors.black.withOpacity(0.15),
-                                    blurRadius: 6,
-                                    offset: const Offset(0, 3),
-                                  ),
-                                ],
+                      // Logout vitre effet
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(14),
+                        child: BackdropFilter(
+                          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                          child: Container(
+                            decoration: BoxDecoration(
+                              color: Colors.white.withOpacity(0.15),
+                              border: Border.all(
+                                color: Colors.white.withOpacity(0.25),
                               ),
-                              child: IconButton(
-                                icon: const Icon(
-                                  Icons.logout_rounded,
-                                  color: Colors.white,
+                              borderRadius: BorderRadius.circular(14),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.15),
+                                  blurRadius: 6,
+                                  offset: const Offset(0, 3),
                                 ),
-                                tooltip: "Se déconnecter",
-                                onPressed: () => context
-                                    .read<AuthBloc>()
-                                    .add(LoggedOut()),
-                              ),
+                              ],
+                            ),
+                            child: IconButton(
+                              icon: const Icon(Icons.logout_rounded,
+                                  color: Colors.deepPurple),
+                              onPressed: () =>
+                                  context.read<AuthBloc>().add(LoggedOut()),
                             ),
                           ),
                         ),
-                        const SizedBox(width: 12),
-                        Text(
-                          user?.username ?? 'Invité',
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 16,
-                            fontWeight: FontWeight.w500,
+                      ),
+                    ],
+                  ),
+
+                  const SizedBox(height: 30),
+
+                  // Stats card (score seulement)
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 18, vertical: 22),
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [
+                          Colors.deepPurple.shade400,
+                          Colors.deepPurple.shade300,
+                        ],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                      borderRadius: BorderRadius.circular(20),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.deepPurple.withOpacity(0.25),
+                          blurRadius: 8,
+                          offset: const Offset(0, 4),
+                        )
+                      ],
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Row(
+                          children: [
+                            Icon(Icons.emoji_events,
+                                color: Colors.white, size: 24),
+                            SizedBox(width: 8),
+                            Text(
+                              "Your Stats",
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 20,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        const Text(
+                          "Keep climbing the ranks!",
+                          style:
+                          TextStyle(color: Colors.white70, fontSize: 14),
+                        ),
+                        const SizedBox(height: 18),
+                        Center(
+                          child: Column(
+                            children: [
+                              Text(
+                                "${user?.score ?? 0}",
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 36,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              const SizedBox(height: 6),
+                              const Text(
+                                "Score",
+                                style: TextStyle(
+                                  color: Colors.white70,
+                                  fontSize: 16,
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                       ],
                     ),
-                  ],
-                ),
+                  ),
 
-                const SizedBox(height: 25),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: [
-                    BuildStatBox(
-                      label: "Rooms",
-                      value: context
-                          .read<RoomBloc>()
-                          .state
-                          .availableRooms
-                          .length,
+                  const SizedBox(height: 35),
+
+                  const Text(
+                    "Quick Actions",
+                    style: TextStyle(
+                      color: Colors.black,
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
                     ),
-                    BuildStatBox(label: "Score", value: user?.score ?? 0),
-                  ],
-                ),
-              ],
-            ),
-          ),
+                  ),
+                  const SizedBox(height: 20),
 
-          const SizedBox(height: 20),
-
-          // BODY
-          Expanded(
-            child: ListView(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              children: [
-                BuildMenuCard(
-                  icon: Icons.list,
-                  title: "Voir les Rooms",
-                  color: Colors.amber.shade600,
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => const RoomListScreen(),
-                      ),
-                    );
-                  },
-                ),
-                BuildMenuCard(
-                  icon: Icons.add,
-                  title: "Créer une Room",
-                  color: Colors.green.shade600,
-                  onTap: () {
-                    showDialog(
-                      context: context,
-                      builder: (context) => AlertDialog(
-                        title: const Text("Nom de la Room"),
-                        content: TextField(
-                          controller: _roomNameController,
-                          decoration: const InputDecoration(
-                            hintText: "Entrez un nom",
+                  // Create Room
+                  _buildActionButton(
+                    title: "Create Room",
+                    color: Colors.green.shade600,
+                    onPressed: () {
+                      showDialog(
+                        context: context,
+                        builder: (context) => AlertDialog(
+                          title: const Text("Nom de la Room"),
+                          content: TextField(
+                            controller: _roomNameController,
+                            decoration: const InputDecoration(
+                              hintText: "Entrez un nom",
+                            ),
                           ),
+                          actions: [
+                            TextButton(
+                              onPressed: () => Navigator.pop(context),
+                              child: const Text("Annuler"),
+                            ),
+                            ElevatedButton(
+                              onPressed: () {
+                                final roomName =
+                                _roomNameController.text.trim();
+                                if (roomName.isNotEmpty) {
+                                  context
+                                      .read<QuizBloc>()
+                                      .add(FetchQuizEvent());
+                                  Navigator.pop(context);
+                                }
+                              },
+                              child: const Text("Créer"),
+                            ),
+                          ],
                         ),
-                        actions: [
-                          TextButton(
-                            onPressed: () => Navigator.pop(context),
-                            child: const Text("Annuler"),
-                          ),
-                          ElevatedButton(
-                            onPressed: () {
-                              final roomName =
-                              _roomNameController.text.trim();
-                              if (roomName.isNotEmpty) {
-                                context.read<QuizBloc>().add(FetchQuizEvent());
-                                Navigator.pop(context);
-                              }
-                            },
-                            child: const Text("Créer"),
-                          ),
-                        ],
-                      ),
-                    );
-                  },
-                ),
-                BuildMenuCard(
-                  icon: Icons.star,
-                  title: "Classement",
-                  color: Colors.blue.shade600,
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => const LeaderboardScreen(),
-                      ),
-                    );
-                  },
-                ),
-              ],
+                      );
+                    },
+                  ),
+                  const SizedBox(height: 12),
+
+                  // Browse Rooms
+                  _buildActionButton(
+                    title: "Browse Rooms",
+                    color: Colors.amber.shade600,
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (_) => const RoomListScreen()),
+                      );
+                    },
+                  ),
+                  const SizedBox(height: 12),
+
+                  // Leaderboard
+                  _buildActionButton(
+                    title: "View Leaderboard",
+                    color: Colors.blue.shade600,
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (_) => const LeaderboardScreen()),
+                      );
+                    },
+                  ),
+                ],
+              ),
             ),
           ),
-        ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildActionButton({
+    required String title,
+    required Color color,
+    required VoidCallback onPressed,
+  }) {
+    return SizedBox(
+      width: double.infinity,
+      child: ElevatedButton(
+        style: ElevatedButton.styleFrom(
+          backgroundColor: color,
+          padding: const EdgeInsets.symmetric(vertical: 15),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(14),
+          ),
+          elevation: 3,
+        ),
+        onPressed: onPressed,
+        child: Text(
+          title,
+          style: const TextStyle(
+            fontSize: 17,
+            fontWeight: FontWeight.bold,
+            color: Colors.white,
+          ),
+        ),
       ),
     );
   }

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:quizduel/core/utils/logger.dart';
 import 'package:quizduel/features/room/domain/entitiy/room_entity.dart';
+import 'package:quizduel/features/room/domain/enums/room_game_status.dart';
 import 'package:quizduel/features/room/presentation/bloc/room_bloc.dart';
 import 'package:quizduel/features/room/presentation/bloc/room_event.dart';
 import 'package:quizduel/features/room/presentation/bloc/room_state.dart';
@@ -34,7 +35,6 @@ class _RoomListScreenState extends State<RoomListScreen> {
   void _showLoadingDialog(BuildContext context, String message) {
     if (_isDialogOpen) return;
     _isDialogOpen = true;
-    logger.d("⏳ Affichage du dialog: $message");
 
     showDialog(
       context: context,
@@ -74,10 +74,25 @@ class _RoomListScreenState extends State<RoomListScreen> {
 
   void _closeDialog(BuildContext context) {
     if (_isDialogOpen) {
-      logger.d("❌ Fermeture du dialog de chargement");
       Navigator.of(context, rootNavigator: true).pop();
       _isDialogOpen = false;
     }
+  }
+
+  void _showSnackBar(String title, String message, ContentType type) {
+    final snackBar = SnackBar(
+      elevation: 0,
+      behavior: SnackBarBehavior.floating,
+      backgroundColor: Colors.transparent,
+      content: AwesomeSnackbarContent(
+        title: title,
+        message: message,
+        contentType: type,
+      ),
+    );
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(snackBar);
   }
 
   @override
@@ -86,82 +101,101 @@ class _RoomListScreenState extends State<RoomListScreen> {
       backgroundColor: const Color(0xFFF5E6C4),
       body: Column(
         children: [
-          // HEADER
+          // 🌟 HEADER (inchangé)
           Container(
             decoration: BoxDecoration(
-              color: Colors.amber.shade600,
+              gradient: LinearGradient(
+                colors: [
+                  Colors.amber.shade400,
+                  Colors.amber.shade600,
+                ],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
               borderRadius: const BorderRadius.only(
                 bottomLeft: Radius.circular(30),
                 bottomRight: Radius.circular(30),
               ),
-            ),
-            child: Column(
-              children: [
-                const SizedBox(height: 50),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    IconButton(
-                      icon: const Icon(Icons.arrow_back, color: Colors.white),
-                      onPressed: () {
-                        logger.i("↩️ Retour à la page précédente");
-                        Navigator.pop(context);
-                      },
-                    ),
-                    const Text(
-                      "Available Rooms",
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 22,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(width: 48),
-                  ],
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.25),
+                  blurRadius: 8,
+                  offset: const Offset(0, 4),
                 ),
-                const SizedBox(height: 20),
+              ],
+            ),
+            padding:
+            const EdgeInsets.only(top: 50, bottom: 25, left: 16, right: 16),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                GestureDetector(
+                  onTap: () {
+                    logger.i("↩️ Retour à la page précédente");
+                    Navigator.pop(context);
+                  },
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.2),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: Colors.white30),
+                    ),
+                    padding: const EdgeInsets.all(8),
+                    child: const Icon(Icons.arrow_back_ios_new,
+                        color: Colors.white, size: 22),
+                  ),
+                ),
+                const Text(
+                  "Available Rooms",
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 22,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 1.1,
+                  ),
+                ),
+                const SizedBox(width: 40),
               ],
             ),
           ),
 
-          // LISTE DES ROOMS
+          // 🧩 BODY
           Expanded(
             child: BlocListener<RoomBloc, RoomState>(
               listenWhen: (prev, curr) => prev.status != curr.status,
               listener: (context, state) {
                 switch (state.status) {
                   case RoomStatus.joiningRoom:
-                    logger.i("🔗 Connexion à une room en cours...");
                     _showLoadingDialog(context, "Connexion à la room...");
                     break;
 
                   case RoomStatus.roomCreated:
-                    if (state.currentRoom != null) {
-                      logger.i("✅ Connexion réussie à la room: ${state.currentRoom!.roomName}");
-                      _closeDialog(context);
+                    _closeDialog(context);
+                    if (state.currentRoom != null && mounted) {
+                      logger.i(
+                          "✅ Connexion réussie à la room: ${state.currentRoom!.roomName}");
+                      _showSnackBar(
+                        "Succès",
+                        "Tu as bien rejoint la room ${state.currentRoom!.roomName}",
+                        ContentType.success,
+                      );
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (_) => RoomScreen(roomEntity: state.currentRoom!),
+                          builder: (_) =>
+                              RoomScreen(roomEntity: state.currentRoom!),
                         ),
                       );
                     }
                     break;
 
                   case RoomStatus.error:
-                    logger.e("❌ Erreur lors de la connexion: ${state.errorMessage}");
                     _closeDialog(context);
-                    final snackBar = SnackBar(
-                      elevation: 0,
-                      behavior: SnackBarBehavior.floating,
-                      backgroundColor: Colors.transparent,
-                      content: AwesomeSnackbarContent(
-                        title: 'Erreur',
-                        message: state.errorMessage ?? "Impossible de rejoindre la room",
-                        contentType: ContentType.failure,
-                      ),
+                    _showSnackBar(
+                      "Erreur",
+                      state.errorMessage ?? "Impossible de rejoindre la room",
+                      ContentType.failure,
                     );
-                    ScaffoldMessenger.of(context).showSnackBar(snackBar);
                     break;
 
                   default:
@@ -169,75 +203,174 @@ class _RoomListScreenState extends State<RoomListScreen> {
                 }
               },
               child: BlocBuilder<RoomBloc, RoomState>(
-                buildWhen: (previous, current) =>
-                previous.status != current.status ||
-                    previous.availableRooms != current.availableRooms,
+                buildWhen: (prev, curr) =>
+                prev.status != curr.status ||
+                    prev.availableRooms != curr.availableRooms,
                 builder: (context, state) {
                   if (state.status == RoomStatus.loadingRooms &&
                       state.availableRooms.isEmpty) {
-                    logger.d("📭 Chargement des rooms en cours...");
                     return const Center(child: CircularProgressIndicator());
-                  } else if (state.availableRooms.isEmpty) {
-                    logger.w("⚠️ Aucune room disponible actuellement");
+                  }
+
+                  if (state.availableRooms.isEmpty) {
                     return RefreshIndicator(
                       onRefresh: _onRefresh,
                       child: ListView(
                         children: const [
                           SizedBox(height: 200),
-                          Center(child: Text("Aucune room disponible 🚪")),
+                          Center(
+                            child: Text(
+                              "Aucune room disponible 🚪",
+                              style: TextStyle(
+                                fontSize: 16,
+                                color: Colors.black54,
+                              ),
+                            ),
+                          ),
                         ],
                       ),
                     );
-                  } else {
-                    final user = context.read<AuthBloc>().state.user;
-                    if (user == null) {
-                      logger.w("⚠️ Aucun utilisateur connecté");
-                      return const Center(
-                          child: Text("Veuillez vous connecter 🔐"));
-                    }
-
-                    logger.i("🎮 ${state.availableRooms.length} rooms disponibles");
-                    return RefreshIndicator(
-                      onRefresh: _onRefresh,
-                      child: ListView.builder(
-                        physics: const AlwaysScrollableScrollPhysics(),
-                        itemCount: state.availableRooms.length,
-                        itemBuilder: (context, index) {
-                          final RoomEntity room = state.availableRooms[index];
-                          return Card(
-                            margin: const EdgeInsets.symmetric(
-                                horizontal: 16, vertical: 8),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: ListTile(
-                              leading: const Icon(Icons.videogame_asset,
-                                  color: Colors.deepPurple),
-                              title: Text(
-                                room.roomName,
-                                style: const TextStyle(
-                                    fontWeight: FontWeight.bold),
-                              ),
-                              subtitle: Text(
-                                "${room.user.length} / ${room.maxPlayers} joueurs",
-                              ),
-                              trailing: const Icon(Icons.arrow_forward_ios,
-                                  size: 18),
-                              onTap: () {
-                                logger.i("👥 Tentative de rejoindre la room: ${room.roomName}");
-                                context.read<RoomBloc>().add(
-                                  JoinRoomEvent(
-                                    roomId: room.roomId,
-                                    userEntity: user,
-                                  ),
-                                );
-                              },
-                            ),
-                          );
-                        },
-                      ),
-                    );
                   }
+
+                  final user = context.read<AuthBloc>().state.user!;
+
+
+                  return RefreshIndicator(
+                    onRefresh: _onRefresh,
+                    child: ListView.builder(
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 16, vertical: 12),
+                      itemCount: state.availableRooms.length,
+                      itemBuilder: (context, index) {
+                        final RoomEntity room = state.availableRooms[index];
+
+                        return Container(
+                          margin: const EdgeInsets.symmetric(vertical: 8),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF3E4A59),
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(
+                              color: Colors.white.withOpacity(0.05),
+                            ),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.25),
+                                blurRadius: 8,
+                                offset: const Offset(0, 4),
+                              ),
+                            ],
+                          ),
+                          padding: const EdgeInsets.all(16),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              // Nom + type
+                              Row(
+                                mainAxisAlignment:
+                                MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text(
+                                    room.roomName,
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 10, vertical: 4),
+                                    decoration: BoxDecoration(
+                                      color: Colors.deepPurple.shade600,
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                    child: const Text(
+                                      "Mixed",
+                                      style: TextStyle(
+                                          color: Colors.white, fontSize: 12),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 24),
+
+                              // Joueurs + Questions
+                              Row(
+                                children: [
+                                  const Icon(Icons.people_alt,
+                                      size: 18, color: Colors.white70),
+                                  const SizedBox(width: 6),
+                                  Text(
+                                    "${room.user.length}/${room.maxPlayers} Players",
+                                    style: const TextStyle(
+                                        color: Colors.white70, fontSize: 13),
+                                  ),
+                                  const SizedBox(width: 18),
+                                  const Icon(Icons.quiz_outlined,
+                                      size: 18, color: Colors.white70),
+                                  const SizedBox(width: 6),
+                                  Text(
+                                    "${room.quiz.length} Questions",
+                                    style: const TextStyle(
+                                        color: Colors.white70, fontSize: 13),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 24),
+
+                              // Statut
+                              Row(
+                                children: [
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 10, vertical: 5),
+                                    decoration: BoxDecoration(
+                                      color: Colors.teal.shade600,
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                    child: Text(
+                                      room.status.toShortString().toUpperCase(),
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                    ),
+                                  ),
+
+                                  const Spacer(),
+
+                                  GestureDetector(
+                                    onTap: (){
+                                      if(room.status.isWaiting) {
+                                        context.read<RoomBloc>().add(JoinRoomEvent(roomId: room.roomId, userEntity: user));
+                                      } else{
+                                        _showSnackBar(
+                                          "Impossible de rejoindre",
+                                          "La partie a déjà commencé ou est terminée.",
+                                          ContentType.warning,
+                                        );
+                                      }
+                                    },
+                                    child: Text(
+                                      "Join",
+                                      style: TextStyle(
+                                        color: Colors.amber.shade400,
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  )
+
+                                ],
+                              ),
+                            ],
+                          ),
+                        );
+                      },
+                    ),
+                  );
                 },
               ),
             ),

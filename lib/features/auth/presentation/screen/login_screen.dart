@@ -2,6 +2,8 @@ import 'dart:ui';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:quizduel/features/auth/presentation/bloc/auth_bloc.dart';
+import 'package:quizduel/features/auth/presentation/bloc/auth_event.dart';
 import 'package:quizduel/features/auth/presentation/bloc/login_event.dart';
 import 'package:quizduel/features/auth/presentation/screen/register_screen.dart';
 import 'package:quizduel/features/auth/presentation/widget/custom_text_field.dart';
@@ -55,6 +57,7 @@ class _LoginScreenState extends State<LoginScreen> {
     return BlocConsumer<LoginBloc, LoginState>(
       listener: (context, state) {
         if (state.status.isSuccess) {
+          context.read<AuthBloc>().add(LoggedIn());
           Navigator.of(context).pushReplacement(
             MaterialPageRoute(builder: (_) => const HomeScreen()),
           );

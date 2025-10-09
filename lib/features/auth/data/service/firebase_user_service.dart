@@ -78,21 +78,21 @@ class FirebaseUserService {
   // get current user
   Future<UserModel?> getCurrentUser() async {
     final user = auth.currentUser;
-    if (user != null) {
+    if (user == null) return null;
+
+    // 🔁 On tente plusieurs fois si Firestore n’a pas encore le doc (après un register/login)
+    for (int i = 0; i < 3; i++) {
       final doc = await firestore.collection("users").doc(user.uid).get();
       if (doc.exists) {
         return UserModel.fromJson(doc.data() as Map<String, dynamic>);
       }
-      return UserModel(
-        id: user.uid,
-        email: user.email ?? '',
-        username: user.displayName ?? '',
-        isReady: false,
-        score: 0,
-      );
+      await Future.delayed(const Duration(milliseconds: 300));
     }
+
+    // 🔥 Si après 3 essais aucun doc Firestore, on renvoie null (pas un fallback vide)
     return null;
   }
+
 
   // get username by id
   Future<String> getUsernameById(String userId) async {
