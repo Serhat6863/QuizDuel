@@ -84,3 +84,28 @@ class StartGameEvent extends RoomEvent {
 }
 
 
+class UpdateFinalScoreEvent extends RoomEvent{
+  final String roomId;
+  final String userId;
+  final int newScore;
+
+  UpdateFinalScoreEvent({
+    required this.roomId,
+    required this.userId,
+    required this.newScore,
+  });
+
+  @override
+  List<Object?> get props => [roomId, userId, newScore];
+}
+
+class GetRoomByIdEvent extends RoomEvent{
+  final String roomId;
+
+  GetRoomByIdEvent({required this.roomId});
+
+  @override
+  List<Object?> get props => [roomId];
+}
+
+

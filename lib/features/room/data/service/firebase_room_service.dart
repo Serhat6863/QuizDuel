@@ -165,6 +165,7 @@ class FirebaseRoomService {
     });
   }
 
+
   // ✅ STATUS STREAM (corrigé)
   Stream<RoomGameStatus> roomStatusStream(String roomId) {
     try {
@@ -196,4 +197,41 @@ class FirebaseRoomService {
       throw Exception("Erreur start game: $e");
     }
   }
+
+  //update room score
+  Future<void> updateRoomScore(String roomId, String userId, int newScore) async {
+    try{
+      logger.i("🔄 Mise à jour du score pour l'utilisateur $userId dans la room $roomId à $newScore");
+      final scoreRef = db.child("rooms/$roomId/user/$userId/score");
+      await scoreRef.set(newScore);
+      logger.i("✅ Score mis à jour pour l'utilisateur $userId dans la room $roomId à $newScore");
+    }catch(e){
+      logger.e("❌ Erreur lors de la mise à jour du score pour l'utilisateur $userId dans la room $roomId: $e", error: e);
+      throw Exception("Something went wrong while updating the score: $e");
+    }
+  }
+
+
+  //get room by id
+  Future<RoomModel> getRoomById(String roomId) async {
+    try{
+      logger.i("🔍 Récupération de la room par ID: $roomId");
+      final roomRef = db.child("rooms/$roomId");
+      final snapshot = await roomRef.get();
+
+      if (snapshot.exists && snapshot.value is Map) {
+        final roomData = deepCast(snapshot.value as Map);
+        final room = RoomModel.fromJson(roomData);
+        logger.i("✅ Room récupérée avec succès: $roomId");
+        return room;
+      } else {
+        logger.w("⚠️ Aucune room trouvée avec l'ID: $roomId");
+        throw Exception("Room not found with ID: $roomId");
+      }
+
+    }catch(e){
+      throw Exception("Something went wrong while getting the room by id: $e");
+    }
+  }
+
 }

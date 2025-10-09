@@ -39,7 +39,7 @@ class _RoomScreenState extends State<RoomScreen> {
     return BlocListener<RoomBloc, RoomState>(
       listenWhen: (prev, curr) => prev.status != curr.status,
       listener: (context, state) {
-        if (state.status == RoomStatus.deleted) {
+        if (state.status == RoomStatus.roomDeleted) {
           final snackBar = SnackBar(
             elevation: 0,
             behavior: SnackBarBehavior.floating,

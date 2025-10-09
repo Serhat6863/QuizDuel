@@ -7,7 +7,6 @@ import 'package:quizduel/features/room/presentation/bloc/room_state.dart';
 import 'package:quizduel/features/room/presentation/screen/room_home_screen.dart';
 
 class WinnerScreen extends StatefulWidget {
-
   final RoomEntity roomEntity;
 
   const WinnerScreen({super.key, required this.roomEntity});
@@ -17,10 +16,26 @@ class WinnerScreen extends StatefulWidget {
 }
 
 class _WinnerScreenState extends State<WinnerScreen> {
+  late List sortedUsers;
 
+  @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+    sortUsersByScore();
+    context.read<RoomBloc>().add(
+      GetRoomByIdEvent(roomId: widget.roomEntity.roomId),
+    );
+  }
 
+  void sortUsersByScore() {
+    final users = [...widget.roomEntity.user];
+    users.sort((a, b) => (b.score ?? 0).compareTo(a.score ?? 0));
 
-
+    setState(() {
+      sortedUsers = users;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -55,11 +70,7 @@ class _WinnerScreenState extends State<WinnerScreen> {
           Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(
-                Icons.emoji_events,
-                size: 100,
-                color: Colors.amber.shade700,
-              ),
+              Icon(Icons.emoji_events, size: 100, color: Colors.amber.shade700),
               const SizedBox(height: 10),
               Text(
                 "Winner!",
@@ -72,35 +83,91 @@ class _WinnerScreenState extends State<WinnerScreen> {
 
               const SizedBox(height: 20),
 
-              //winner + score and after second and third and fourth
-              Text(
-                "${widget.roomEntity.user.first.username} with ${widget.roomEntity.user.first.score} points",
-                style: const TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.w500,
-                  color: Colors.black87,
-                ),
+              BlocBuilder<RoomBloc, RoomState>(
+                builder: (context, state) {
+                  // utilise la room à jour
+                  final room = state.currentRoom ?? widget.roomEntity;
+                  final users = [...room.user];
+                  users.sort((a, b) => (b.score ?? 0).compareTo(a.score ?? 0));
+
+                  return ListView.builder(
+                    shrinkWrap: true,
+                    itemCount: users.length,
+                    itemBuilder: (context, index) {
+                      final user = users[index];
+                      return Container(
+                        margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(16),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.grey.shade400,
+                              blurRadius: 4,
+                              offset: const Offset(2, 2),
+                            ),
+                          ],
+                        ),
+                        child: ListTile(
+                          leading: CircleAvatar(
+                            backgroundColor: Colors.blue.shade200,
+                            child: Text(
+                              user.username.isNotEmpty
+                                  ? user.username[0].toUpperCase()
+                                  : '?',
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                          title: Text(
+                            user.username,
+                            style: const TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          trailing: Text(
+                            "Score: ${user.score ?? 0}",
+                            style: const TextStyle(
+                              fontSize: 16,
+                              color: Colors.black54,
+                            ),
+                          ),
+                        ),
+                      );
+                    },
+                  );
+                },
               ),
 
-              const SizedBox(height: 100,),
 
+              const SizedBox(height: 100),
 
-              BlocListener<RoomBloc,RoomState>(
-                listener: (context, state){
-                  if(state.status == RoomStatus.deleted){
+              BlocListener<RoomBloc, RoomState>(
+                listener: (context, state) {
+                  if (state.status == RoomStatus.roomDeleted) {
                     Navigator.of(context).pushAndRemoveUntil(
-                      MaterialPageRoute(builder: (context) => const HomeScreen())
-                      , (route) => false
+                      MaterialPageRoute(
+                        builder: (context) => const HomeScreen(),
+                      ),
+                      (route) => false,
                     );
                   }
                 },
                 child: ElevatedButton(
                   onPressed: () {
-                    context.read<RoomBloc>().add(DeleteRoomEvent(roomId: widget.roomEntity.roomId));
+                    context.read<RoomBloc>().add(
+                      DeleteRoomEvent(roomId: widget.roomEntity.roomId),
+                    );
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.blue.shade400,
-                    padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 15),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 40,
+                      vertical: 15,
+                    ),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(30),
                     ),

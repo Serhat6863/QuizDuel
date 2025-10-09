@@ -1,9 +1,6 @@
-import 'dart:math';
-
 import 'package:awesome_snackbar_content/awesome_snackbar_content.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:logger/logger.dart';
 import 'package:quizduel/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:quizduel/features/auth/presentation/bloc/auth_event.dart';
 import 'package:quizduel/features/game/presentation/bloc/quiz_bloc.dart';
@@ -92,7 +89,7 @@ class _HomeScreenState extends State<HomeScreen> {
   void _createRoom(BuildContext context, String roomName) {
     final user = context.read<AuthBloc>().state.user!;
     final quizState = context.read<QuizBloc>().state;
-    
+
     logger.i("Tentative de création de room ${roomName} par ${user.username}");
 
 
@@ -236,11 +233,17 @@ class _HomeScreenState extends State<HomeScreen> {
                       ),
                       Row(
                         children: [
-                          IconButton(
-                            icon: const Icon(Icons.logout, color: Colors.white),
-                            onPressed: () =>
-                                context.read<AuthBloc>().add(LoggedOut()),
+                          Container(
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFF5E6C4), // même fond que ton app
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: IconButton(
+                              icon: const Icon(Icons.logout, color: Colors.black87),
+                              onPressed: () => context.read<AuthBloc>().add(LoggedOut()),
+                            ),
                           ),
+
                           const SizedBox(width: 10),
                           Text(
                             user?.username ?? 'Invité',

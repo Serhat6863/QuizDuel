@@ -1,11 +1,10 @@
-import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:quizduel/core/utils/logger.dart';
 import 'package:quizduel/features/auth/domain/entity/user_entity.dart';
 import 'package:quizduel/features/room/domain/enums/room_game_status.dart';
 import 'package:quizduel/features/room/domain/repository/room_repository.dart';
 import 'package:quizduel/features/auth/domain/repository/user_repository.dart';
-import '../../domain/entitiy/room_entity.dart';
+
 import 'room_event.dart';
 import 'room_state.dart';
 
@@ -25,6 +24,8 @@ class RoomBloc extends Bloc<RoomEvent, RoomState> {
     on<ListenPlayersEvent>(_onListenPlayers);
     on<ListenStatusEvent>(_onListenStatus);
     on<StartGameEvent>(_onStartGame);
+    on<UpdateFinalScoreEvent>(_onUpdateFinalScore);
+    on<GetRoomByIdEvent>(_onGetRoomById);
   }
 
   /// ✅ Créer une room
@@ -199,6 +200,37 @@ class RoomBloc extends Bloc<RoomEvent, RoomState> {
     }catch(e){
       logger.e("❌ Erreur lors du démarrage du jeu dans la room ${event.roomId}", error: e);
       emit(RoomState.error("Erreur démarrage jeu: ${e.toString()}"));
+    }
+  }
+
+  Future<void> _onUpdateFinalScore(UpdateFinalScoreEvent event , Emitter<RoomState> emit) async{
+    emit(state.copyWith(status: RoomStatus.updatingScore));
+
+    try{
+      logger.i("🔄 Mise à jour du score final de ${event.userId} dans la room ${event.roomId} à ${event.newScore}");
+      await roomRepository.updateRoomScore(event.roomId, event.userId, event.newScore);
+      logger.i("✅ Score final mis à jour pour ${event.userId} dans la room ${event.roomId} à ${event.newScore}");
+
+      final updatedRoom = await roomRepository.getRoomById(event.roomId);
+
+      emit(RoomState.scoreUpdated(updatedRoom));
+    }catch(e){
+      logger.e("❌ Erreur lors de la mise à jour du score final pour ${event.userId} dans la room ${event.roomId}", error: e);
+      emit(RoomState.error("Erreur mise à jour score: ${e.toString()}"));
+    }
+  }
+
+
+  Future<void> _onGetRoomById(GetRoomByIdEvent event, Emitter<RoomState> emit) async{
+    try{
+      logger.d("🔍 Récupération de la room par ID: ${event.roomId}");
+      final room = await roomRepository.getRoomById(event.roomId);
+
+      emit(RoomState.fetchingRoomById(room));
+
+    }catch(e){
+      logger.e("❌ Erreur lors de la récupération de la room ${event.roomId}", error: e);
+      emit(RoomState.error("Erreur récupération room: ${e.toString()}"));
     }
   }
 

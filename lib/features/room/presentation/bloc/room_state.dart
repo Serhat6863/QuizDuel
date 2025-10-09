@@ -7,11 +7,15 @@ enum RoomStatus {
   creatingRoom,
   joiningRoom,
   gameLoading,
+  updatingScore,
+  fetchingRoomById,
+
   loaded,
   roomCreated,
   gameStarted,
   playersUpdated,
-  deleted,
+  scoreUpdated,
+  roomDeleted,
   error,
 }
 
@@ -22,11 +26,15 @@ extension RoomStatusX on RoomStatus {
   bool get isJoiningRoom => this == RoomStatus.joiningRoom;
   bool get isGameLoading => this == RoomStatus.gameLoading;
 
+
+  bool get isUpdatingScore => this == RoomStatus.updatingScore;
+  bool get isFetchingRoomById => this == RoomStatus.fetchingRoomById;
   bool get isLoaded => this == RoomStatus.loaded;
   bool get isRoomCreated => this == RoomStatus.roomCreated;
   bool get isGameStarted => this == RoomStatus.gameStarted;
   bool get isPlayersUpdated => this == RoomStatus.playersUpdated;
-  bool get isDeleted => this == RoomStatus.deleted;
+  bool get isScoreUpdated => this == RoomStatus.scoreUpdated;
+  bool get isRoomDeleted => this == RoomStatus.roomDeleted;
   bool get isError => this == RoomStatus.error;
 }
 
@@ -45,45 +53,42 @@ class RoomState {
     this.players,
   });
 
+  // --- FACTORIES ---
   factory RoomState.initial() => const RoomState(status: RoomStatus.initial);
   factory RoomState.loadingRooms() => const RoomState(status: RoomStatus.loadingRooms);
   factory RoomState.creatingRoom() => const RoomState(status: RoomStatus.creatingRoom);
   factory RoomState.joiningRoom() => const RoomState(status: RoomStatus.joiningRoom);
 
-  factory RoomState.gameLoading(RoomEntity room) => RoomState(
-    status: RoomStatus.gameLoading,
-    currentRoom: room,
-  );
+  factory RoomState.gameLoading(RoomEntity room) =>
+      RoomState(status: RoomStatus.gameLoading, currentRoom: room);
 
-  factory RoomState.roomLoaded(List<RoomEntity> rooms) => RoomState(
-    status: RoomStatus.loaded,
-    availableRooms: rooms,
-  );
+  factory RoomState.roomLoaded(List<RoomEntity> rooms) =>
+      RoomState(status: RoomStatus.loaded, availableRooms: rooms);
 
-  factory RoomState.roomCreated(RoomEntity room) => RoomState(
-    status: RoomStatus.roomCreated,
-    currentRoom: room,
-  );
+  factory RoomState.roomCreated(RoomEntity room) =>
+      RoomState(status: RoomStatus.roomCreated, currentRoom: room);
+
+  factory RoomState.gameStarted(RoomEntity room) =>
+      RoomState(status: RoomStatus.gameStarted, currentRoom: room);
+
+  factory RoomState.playersUpdated(List<UserEntity> players) =>
+      RoomState(status: RoomStatus.playersUpdated, players: players);
+
+  factory RoomState.scoreUpdated(RoomEntity updatedRoom) =>
+      RoomState(status: RoomStatus.scoreUpdated, currentRoom: updatedRoom);
 
 
-  factory RoomState.gameStarted(RoomEntity room) => RoomState(
-    status: RoomStatus.gameStarted,
-    currentRoom: room,
-  );
 
-  factory RoomState.roomDeleted() => const RoomState(status: RoomStatus.deleted);
+  factory RoomState.roomDeleted() => const RoomState(status: RoomStatus.roomDeleted);
   factory RoomState.roomLeft() => const RoomState(status: RoomStatus.initial);
 
-  factory RoomState.playersUpdated(List<UserEntity> players) => RoomState(
-    status: RoomStatus.playersUpdated,
-    players: players,
-  );
+  factory RoomState.fetchingRoomById(RoomEntity room) =>
+      RoomState(status: RoomStatus.fetchingRoomById, currentRoom: room);
 
-  factory RoomState.error(String message) => RoomState(
-    status: RoomStatus.error,
-    errorMessage: message,
-  );
+  factory RoomState.error(String message) =>
+      RoomState(status: RoomStatus.error, errorMessage: message);
 
+  // --- COPYWITH ---
   RoomState copyWith({
     RoomStatus? status,
     String? errorMessage,

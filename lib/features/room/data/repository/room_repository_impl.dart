@@ -172,4 +172,34 @@ class RoomRepositoryImpl implements RoomRepository {
       throw Exception("Something went wrong while starting the game: $e");
     }
   }
+
+  @override
+  Future<void> updateRoomScore(String roomId, String userId, int newScore) async{
+    try{
+      logger.i("🔄 Mise à jour du score pour l'utilisateur $userId dans la room $roomId à $newScore");
+      await firebaseRoomService.updateRoomScore(roomId, userId, newScore);
+      logger.i("✅ Score mis à jour pour l'utilisateur $userId dans la room $roomId à $newScore");
+    }catch(e){
+      logger.e("❌ Erreur lors de la mise à jour du score pour l'utilisateur $userId dans la room $roomId: $e", error: e);
+      throw Exception("Something went wrong while updating the score: $e");
+    }
+  }
+
+  @override
+  Future<RoomEntity> getRoomById(String roomId) async {
+    try{
+      final roomModel = await firebaseRoomService.getRoomById(roomId);
+      if(roomModel == null){
+        logger.w("⚠️ Aucune room trouvée avec l'ID $roomId");
+        throw Exception("No room found with id: $roomId");
+      }
+
+      logger.i("✅ Room récupérée avec succès: $roomId");
+      return roomModel.toEntity();
+    }catch(e){
+      logger.e("❌ Erreur lors de la récupération de la room $roomId: $e", error: e);
+      throw Exception("Something went wrong while getting the room by id: $e");
+    }
+  }
+
 }

@@ -1,7 +1,12 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:html_unescape/html_unescape.dart';
+import 'package:quizduel/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:quizduel/features/game/presentation/screen/winner_screen.dart';
 import 'package:quizduel/features/room/domain/entitiy/room_entity.dart';
+import 'package:quizduel/features/room/presentation/bloc/room_bloc.dart';
+import 'package:quizduel/features/room/presentation/bloc/room_event.dart';
 
 class GameScreen extends StatefulWidget {
 
@@ -22,6 +27,8 @@ class _GameScreenState extends State<GameScreen> {
   int totalQuestions = 10;
   bool? isAnswerCorrect;
   int? selectedAnswerIndex;
+  late final currentUser;
+  final unescape = HtmlUnescape();
 
   int timeLeft = 10; // temps en secondes
   Timer? timer;
@@ -30,6 +37,7 @@ class _GameScreenState extends State<GameScreen> {
   void initState() {
     super.initState();
     startTimer();
+    currentUser = context.read<AuthBloc>().state.user!;
   }
 
 
@@ -42,6 +50,12 @@ class _GameScreenState extends State<GameScreen> {
       });
       startTimer();
     }else{
+      //update last score to roomEntity player
+      context.read<RoomBloc>().add(UpdateFinalScoreEvent(
+        roomId: widget.roomEntity.roomId,
+        userId: currentUser.id,
+        newScore: score,
+      ));
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
@@ -140,7 +154,7 @@ class _GameScreenState extends State<GameScreen> {
               ],
             ),
             child:  Text(
-              widget.roomEntity.quiz[questionNumber].question,
+              unescape.convert(widget.roomEntity.quiz[questionNumber].question),
               textAlign: TextAlign.center,
               style: TextStyle(fontSize: 20, fontWeight: FontWeight.w600),
             ),
@@ -156,8 +170,9 @@ class _GameScreenState extends State<GameScreen> {
                 itemCount: widget.roomEntity.quiz[questionNumber].options.length,
                 itemBuilder: (context, index){
                   final answer = widget.roomEntity.quiz[questionNumber];
+                  final decodedOption = unescape.convert(answer.options[index]);
                   final isCorrect = index == widget.roomEntity.quiz[questionNumber].correctAnswerIndex;
-                  return _buildAnswerButton(answer.options[index], isCorrect);
+                  return _buildAnswerButton(decodedOption, isCorrect);
                 }
               ),
             )
