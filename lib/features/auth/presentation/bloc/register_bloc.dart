@@ -20,7 +20,7 @@ class RegisterBloc extends Bloc<RegisterEvent, RegisterState>{
       emit(RegisterState.success());
 
     }catch(e){
-      emit(RegisterState.failure(AppFailure(message: "Échec de l'inscription", code: e.toString())));
+      emit(RegisterState.failure(e.toString()));
     }
   }
 }

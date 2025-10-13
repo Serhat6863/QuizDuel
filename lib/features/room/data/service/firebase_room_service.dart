@@ -7,7 +7,7 @@ import '../model/room_model.dart';
 class FirebaseRoomService {
   final DatabaseReference db = FirebaseDatabase.instance.ref();
 
-  // ✅ CREATE ROOM
+  //  CREATE ROOM
   Future<RoomModel?> createRoom(RoomModel room) async {
     try {
       logger.i("🛠️ Tentative de création d'une room pour ${room.hostId}");
@@ -50,7 +50,7 @@ class FirebaseRoomService {
     }
   }
 
-  // ✅ AUTO DELETE ON DISCONNECT
+  //  AUTO DELETE ON DISCONNECT
   Future<void> setAutoDeleteOnDisconnect(String roomId) async {
     try {
       logger.i("⚙️ Configuration de la suppression auto pour $roomId");
@@ -64,7 +64,7 @@ class FirebaseRoomService {
     }
   }
 
-  // ✅ DELETE ROOM
+  //  DELETE ROOM
   Future<void> deleteRoom(String roomId) async {
     try {
       logger.i("🗑️ Suppression manuelle de la room $roomId");
@@ -76,11 +76,21 @@ class FirebaseRoomService {
     }
   }
 
-  // ✅ JOIN ROOM
+  //  JOIN ROOM
   Future<void> joinRoom(String roomId, UserModel user) async {
     try {
       logger.i("👥 ${user.username} tente de rejoindre la room $roomId");
       final userRef = db.child("rooms/$roomId/user/${user.id}");
+      // verifier si la room est pleine
+      final roomSnapshot = await db.child("rooms/$roomId").get();
+      if (!roomSnapshot.exists) {
+        throw Exception("Room $roomId n'existe pas");
+      }
+      final roomData = roomSnapshot.value as Map<dynamic, dynamic>;
+      final currentUsers = roomData['user'] as Map<dynamic, dynamic>? ?? {};
+      if (currentUsers.length >= (roomData['maxPlayers'] ?? 4)) {
+        throw Exception("Room $roomId est pleine");
+      }
       await userRef.set(user.toJson());
       logger.i("✅ ${user.username} a rejoint la room $roomId");
     } catch (e, s) {
@@ -89,7 +99,7 @@ class FirebaseRoomService {
     }
   }
 
-  // ✅ LEAVE ROOM
+  //  LEAVE ROOM
   Future<void> leaveRoom(String roomId, UserModel user) async {
     try {
       logger.i("🚪 ${user.username} quitte la room $roomId");
@@ -102,7 +112,7 @@ class FirebaseRoomService {
     }
   }
 
-  // ✅ FETCH ROOMS
+  // FETCH ROOMS
   Future<List<RoomModel>> getAvailableRooms() async {
     try {
       logger.i("📡 Récupération des rooms disponibles...");
@@ -128,7 +138,7 @@ class FirebaseRoomService {
     }
   }
 
-  // ✅ DEEP CAST MAP
+  //  DEEP CAST MAP
   Map<String, dynamic> deepCast(Map input) {
     return input.map((key, value) {
       if (value is Map) {
@@ -144,7 +154,7 @@ class FirebaseRoomService {
     });
   }
 
-  // ✅ PLAYER LIST STREAM
+  //  PLAYER LIST STREAM
   Stream<List<UserModel>> playerListStream(String roomId) {
     final usersRef = db.child("rooms/$roomId/user");
     logger.d("👂 Stream des joueurs actif pour la room $roomId");
@@ -166,7 +176,7 @@ class FirebaseRoomService {
   }
 
 
-  // ✅ STATUS STREAM (corrigé)
+  //  STATUS STREAM
   Stream<RoomGameStatus> roomStatusStream(String roomId) {
     try {
       final statusRef = db.child("rooms/$roomId/status"); // ✅ corrigé ici
@@ -184,7 +194,7 @@ class FirebaseRoomService {
     }
   }
 
-  // ✅ START GAME
+  //  START GAME
   Future<void> startGame(String roomId) async {
     try {
       logger.i("▶️ Démarrage du jeu dans la room $roomId");

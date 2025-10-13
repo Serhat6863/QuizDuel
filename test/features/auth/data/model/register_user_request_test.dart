@@ -1,39 +1,40 @@
-
-
+import 'package:flutter_test/flutter_test.dart';
 import 'package:quizduel/features/auth/data/model/register_user_request.dart';
-import 'package:test/test.dart';
 
-void main(){
-  group("Register Request", (){
-    const RegisterJson = {
-      'email' : 'test@gmail.com',
-      'username' : 'testuser',
-      'password' : 'password123',
-    };
+void main() {
+  group("RegisterUserRequestDto", () {
+    const email = "test@example.com";
+    const username = "Serhat";
+    const password = "123456";
 
-
-
-    final registerRequetsUserModel = RegisterUserRequestDto(
-      email: 'test@gmail.com',
-      username: 'testuser',
-      password: 'password123',
+    final dto = RegisterUserRequestDto(
+      email: email,
+      username: username,
+      password: password,
     );
 
+    final dtoJson = {
+      "email": email,
+      "password": password,
+      "username": username,
+    };
 
-    test("From json should return a valid model", (){
-      final result = RegisterUserRequestDto.fromJson(RegisterJson);
-
-      expect(result.email, registerRequetsUserModel.email);
-      expect(result.username, registerRequetsUserModel.username);
-      expect(result.password, registerRequetsUserModel.password);
-
+    test("✅ toJson() retourne la bonne map", () {
+      expect(dto.toJson(), equals(dtoJson));
     });
 
-    test("To json should return a valid map", (){
-      final result = registerRequetsUserModel.toJson();
-
-      expect(result, RegisterJson);
+    test("✅ fromJson() crée une instance correcte", () {
+      final result = RegisterUserRequestDto.fromJson(dtoJson);
+      expect(result.email, equals(email));
+      expect(result.username, equals(username));
+      expect(result.password, equals(password));
     });
 
+    test("✅ fromJson() gère les champs manquants avec valeurs par défaut", () {
+      final result = RegisterUserRequestDto.fromJson({});
+      expect(result.email, equals(''));
+      expect(result.username, equals(''));
+      expect(result.password, equals(''));
+    });
   });
 }

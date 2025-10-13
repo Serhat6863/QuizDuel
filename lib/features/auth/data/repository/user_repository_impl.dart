@@ -97,4 +97,13 @@ class UserRepositoryImpl implements UserRepository {
       throw Exception("Error in UserRepositoryImpl.getAllUsers: $e");
     }
   }
+
+  @override
+  Future<void> updateScore(String userId, int newScore)  async{
+    try{
+      await firebaseUserService.updateScore(userId, newScore);
+    }catch(e){
+      throw Exception("Error in UserRepositoryImpl.updateScore: $e");
+    }
+  }
 }

@@ -20,9 +20,10 @@ class _WinnerScreenState extends State<WinnerScreen> {
 
   @override
   void initState() {
-    // TODO: implement initState
     super.initState();
     sortUsersByScore();
+
+    // 🔄 Fetch updated room data
     context.read<RoomBloc>().add(
       GetRoomByIdEvent(roomId: widget.roomEntity.roomId),
     );
@@ -44,6 +45,7 @@ class _WinnerScreenState extends State<WinnerScreen> {
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
+          // HEADER
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 40),
             decoration: BoxDecoration(
@@ -67,6 +69,7 @@ class _WinnerScreenState extends State<WinnerScreen> {
 
           const Spacer(),
 
+          // WINNER SECTION
           Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
@@ -80,12 +83,11 @@ class _WinnerScreenState extends State<WinnerScreen> {
                   color: Colors.green.shade700,
                 ),
               ),
-
               const SizedBox(height: 20),
 
+              // 🏅 Players List
               BlocBuilder<RoomBloc, RoomState>(
                 builder: (context, state) {
-                  // utilise la room à jour
                   final room = state.currentRoom ?? widget.roomEntity;
                   final users = [...room.user];
                   users.sort((a, b) => (b.score ?? 0).compareTo(a.score ?? 0));
@@ -96,7 +98,10 @@ class _WinnerScreenState extends State<WinnerScreen> {
                     itemBuilder: (context, index) {
                       final user = users[index];
                       return Container(
-                        margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                        margin: const EdgeInsets.symmetric(
+                          horizontal: 20,
+                          vertical: 8,
+                        ),
                         decoration: BoxDecoration(
                           color: Colors.white,
                           borderRadius: BorderRadius.circular(16),
@@ -142,9 +147,9 @@ class _WinnerScreenState extends State<WinnerScreen> {
                 },
               ),
 
-
               const SizedBox(height: 100),
 
+              // 🏠 RETURN TO HOME BUTTON
               BlocListener<RoomBloc, RoomState>(
                 listener: (context, state) {
                   if (state.status == RoomStatus.roomDeleted) {
@@ -152,7 +157,7 @@ class _WinnerScreenState extends State<WinnerScreen> {
                       MaterialPageRoute(
                         builder: (context) => const HomeScreen(),
                       ),
-                      (route) => false,
+                          (route) => false,
                     );
                   }
                 },
@@ -172,14 +177,14 @@ class _WinnerScreenState extends State<WinnerScreen> {
                       borderRadius: BorderRadius.circular(30),
                     ),
                   ),
-                  child: Row(
+                  child: const Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const Text(
+                      Text(
                         "Home",
                         style: TextStyle(fontSize: 18, color: Colors.white),
                       ),
-                      const SizedBox(width: 10),
+                      SizedBox(width: 10),
                       Icon(Icons.home, color: Colors.white),
                     ],
                   ),

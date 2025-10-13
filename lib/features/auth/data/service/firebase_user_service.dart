@@ -118,6 +118,16 @@ class FirebaseUserService {
     }
   }
 
+  Future<void> updateScore(String userId, int newScore) async{
+    try{
+      await firestore.collection("users").doc(userId).update({
+        "score": newScore,
+      });
+    }catch(e){
+      throw Exception("Error updating score: $e");
+    }
+  }
+
   String _mapFirebaseError(FirebaseAuthException e) {
     switch (e.code) {
       case 'user-not-found':

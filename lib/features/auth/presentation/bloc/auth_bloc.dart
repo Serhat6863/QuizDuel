@@ -1,5 +1,5 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:quizduel/core/error/app_failure.dart';
+import 'package:quizduel/core/utils/logger.dart';
 import 'package:quizduel/features/auth/domain/repository/user_repository.dart';
 import 'package:quizduel/features/auth/presentation/bloc/auth_event.dart';
 import 'package:quizduel/features/auth/presentation/bloc/auth_state.dart';
@@ -11,6 +11,19 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     on<AppStarted>(_onAppStarted);
     on<LoggedIn>(_onLoggedIn);
     on<LoggedOut>(_onLoggedOut);
+
+    on<RefreshUserEvent>((event, emit) async {
+      try {
+        final user = await userRepository.getCurrentUser();
+        if (user != null) {
+          emit(state.copyWith(user: user)); // ✅ pas de nouveau AuthState.authenticated
+          logger.i("🔄 Utilisateur rafraîchi avec succès: ${user.username}");
+        }
+      } catch (e) {
+        logger.e("❌ Erreur lors du rafraîchissement utilisateur: $e");
+      }
+    });
+
   }
 
   /// 🔥 Quand l’app démarre, on check Firestore pour voir si un user existe
@@ -24,7 +37,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         emit(AuthState.unauthenticated());
       }
     } catch (e) {
-      emit(AuthState.failure(AppFailure(message: "Impossible de charger l'utilisateur", code: e.toString(), )));
+      emit(AuthState.failure(e.toString()));
     }
   }
 
@@ -39,7 +52,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         emit(AuthState.unauthenticated());
       }
     } catch (e) {
-      emit(AuthState.failure(AppFailure( message: "Connexion échouée", code: e.toString())));
+      emit(AuthState.failure(e.toString()));
     }
   }
 
@@ -50,7 +63,9 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       await userRepository.signOut();
       emit(AuthState.unauthenticated());
     } catch (e) {
-      emit(AuthState.failure(AppFailure( message: "Erreur lors de la déconnexion", code: e.toString())));
+      emit(AuthState.failure(e.toString()));
     }
   }
+
+  
 }

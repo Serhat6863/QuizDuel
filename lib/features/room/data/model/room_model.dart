@@ -35,7 +35,7 @@ class RoomModel extends RoomEntity {
           : DateTime.now(),
       maxPlayers: json['maxPlayers'] is int ? json['maxPlayers'] : 4,
 
-      // ✅ Convertir les quiz stockés en JSON vers QuizModel
+
       quiz: (json['quiz'] is List)
           ? (json['quiz'] as List)
           .map((q) => QuizModel.fromJson(Map<String, dynamic>.from(q)))
@@ -67,7 +67,7 @@ class RoomModel extends RoomEntity {
       'createdAt': createdAt.toIso8601String(),
       'maxPlayers': maxPlayers,
 
-      // ✅ Transformer la liste de QuizEntity en JSON pour Firebase
+      // Transformer la liste de QuizEntity en JSON pour Firebase
       'quiz': quiz.map((q) {
         if (q is QuizModel) return q.toJson();
         return {

@@ -32,7 +32,14 @@ class _HomeScreenState extends State<HomeScreen> {
   void initState() {
     super.initState();
     context.read<RoomBloc>().add(FetchAvailableRoomsEvent());
+    Future.delayed(const Duration(milliseconds: 300), () {
+      context.read<AuthBloc>().add(RefreshUserEvent());
+    });
   }
+
+
+
+
 
   @override
   void dispose() {
@@ -67,7 +74,7 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
               const SizedBox(height: 8),
               const Text(
-                "Merci de patienter quelques secondes ⏳",
+                "Please wait a few seconds ⏳",
                 textAlign: TextAlign.center,
                 style: TextStyle(color: Colors.black54),
               ),
@@ -85,11 +92,27 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
+  void _showSnackBar(String title, String message, ContentType type) {
+    final snackBar = SnackBar(
+      elevation: 0,
+      behavior: SnackBarBehavior.floating,
+      backgroundColor: Colors.transparent,
+      content: AwesomeSnackbarContent(
+        title: title,
+        message: message,
+        contentType: type,
+      ),
+    );
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(snackBar);
+  }
+
   void _createRoom(BuildContext context, String roomName) {
     final user = context.read<AuthBloc>().state.user!;
     final quizState = context.read<QuizBloc>().state;
 
-    logger.i("Tentative de création de room $roomName par ${user.username}");
+    logger.i("Attempting to create room $roomName by ${user.username}");
 
     if (quizState.status.isLoaded && quizState.quizzes.isNotEmpty) {
       context.read<RoomBloc>().add(
@@ -109,19 +132,11 @@ class _HomeScreenState extends State<HomeScreen> {
       );
       _closeDialog(context);
     } else {
-      final snackBar = SnackBar(
-        elevation: 0,
-        behavior: SnackBarBehavior.floating,
-        backgroundColor: Colors.transparent,
-        content: AwesomeSnackbarContent(
-          title: 'Erreur',
-          message: "Impossible de créer la room, aucun quiz n’a été chargé 😢",
-          contentType: ContentType.failure,
-        ),
+      _showSnackBar(
+        "Error",
+        "Unable to create room — no quizzes loaded 😢",
+        ContentType.failure,
       );
-      ScaffoldMessenger.of(context)
-        ..hideCurrentSnackBar()
-        ..showSnackBar(snackBar);
     }
   }
 
@@ -131,63 +146,70 @@ class _HomeScreenState extends State<HomeScreen> {
 
     return MultiBlocListener(
       listeners: [
+        /// 🧩 ROOM BLOC
         BlocListener<RoomBloc, RoomState>(
           listenWhen: (prev, curr) => prev.status != curr.status,
           listener: (context, state) {
-            if (state.status == RoomStatus.creatingRoom) {
-              _showLoadingDialog(context, "Création de la room...");
-            } else if (state.status.isRoomCreated && state.currentRoom != null) {
-              _closeDialog(context);
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => RoomScreen(roomEntity: state.currentRoom!),
-                ),
-              );
-            } else if (state.status.isError) {
-              _closeDialog(context);
-              final snackBar = SnackBar(
-                elevation: 0,
-                behavior: SnackBarBehavior.floating,
-                backgroundColor: Colors.transparent,
-                content: AwesomeSnackbarContent(
-                  title: 'Erreur',
-                  message: state.errorMessage ?? "Une erreur est survenue",
-                  contentType: ContentType.failure,
-                ),
-              );
-              ScaffoldMessenger.of(context)
-                ..hideCurrentSnackBar()
-                ..showSnackBar(snackBar);
+            switch (state.status) {
+              case RoomStatus.creatingRoom:
+                _showLoadingDialog(context, "Creating room...");
+                break;
+
+              case RoomStatus.roomCreated:
+                _closeDialog(context);
+                if (state.currentRoom != null && mounted) {
+                  logger.i("✅ Room created successfully: ${state.currentRoom!.roomName}");
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => RoomScreen(roomEntity: state.currentRoom!),
+                    ),
+                  );
+                }
+                break;
+
+              case RoomStatus.error:
+                _closeDialog(context);
+                _showSnackBar(
+                  "Error",
+                  state.errorMessage ?? "Failed to create room.",
+                  ContentType.failure,
+                );
+                break;
+
+              default:
+                break;
             }
           },
         ),
+
+        /// 🧠 QUIZ BLOC
         BlocListener<QuizBloc, QuizState>(
           listener: (context, quizState) {
-            if (quizState.status.isLoading) {
-              _showLoadingDialog(context, "Chargement du quiz...");
-            } else if (quizState.status.isLoaded) {
-              _closeDialog(context);
-              final roomName = _roomNameController.text.trim();
-              if (roomName.isNotEmpty) {
-                _createRoom(context, roomName);
-              }
-            } else if (quizState.status.isError) {
-              _closeDialog(context);
-              final snackBar = SnackBar(
-                elevation: 0,
-                behavior: SnackBarBehavior.floating,
-                backgroundColor: Colors.transparent,
-                content: AwesomeSnackbarContent(
-                  title: 'Erreur',
-                  message: quizState.message ??
-                      "Impossible de charger les quiz 😢",
-                  contentType: ContentType.failure,
-                ),
-              );
-              ScaffoldMessenger.of(context)
-                ..hideCurrentSnackBar()
-                ..showSnackBar(snackBar);
+            switch (quizState.status) {
+              case QuizStatus.loading:
+                _showLoadingDialog(context, "Loading quizzes...");
+                break;
+
+              case QuizStatus.loaded:
+                _closeDialog(context);
+                final roomName = _roomNameController.text.trim();
+                if (roomName.isNotEmpty) {
+                  _createRoom(context, roomName);
+                }
+                break;
+
+              case QuizStatus.error:
+                _closeDialog(context);
+                _showSnackBar(
+                  "Error",
+                  quizState.message ?? "Failed to load quizzes 😢",
+                  ContentType.failure,
+                );
+                break;
+
+              default:
+                break;
             }
           },
         ),
@@ -201,7 +223,7 @@ class _HomeScreenState extends State<HomeScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Header
+                  // 👋 HEADER
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -217,7 +239,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             ),
                           ),
                           Text(
-                            user?.username ?? 'Invité',
+                            user?.username ?? 'Guest',
                             style: const TextStyle(
                               color: Colors.black,
                               fontSize: 26,
@@ -226,7 +248,8 @@ class _HomeScreenState extends State<HomeScreen> {
                           ),
                         ],
                       ),
-                      // Logout vitre effet
+
+                      // 🔒 LOGOUT (Glass effect)
                       ClipRRect(
                         borderRadius: BorderRadius.circular(14),
                         child: BackdropFilter(
@@ -260,11 +283,10 @@ class _HomeScreenState extends State<HomeScreen> {
 
                   const SizedBox(height: 30),
 
-                  // Stats card (score seulement)
+                  // 🏆 STATS CARD
                   Container(
                     width: double.infinity,
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 18, vertical: 22),
+                    padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 22),
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
                         colors: [
@@ -304,8 +326,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         const SizedBox(height: 8),
                         const Text(
                           "Keep climbing the ranks!",
-                          style:
-                          TextStyle(color: Colors.white70, fontSize: 14),
+                          style: TextStyle(color: Colors.white70, fontSize: 14),
                         ),
                         const SizedBox(height: 18),
                         Center(
@@ -346,7 +367,6 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                   const SizedBox(height: 20),
 
-                  // Create Room
                   _buildActionButton(
                     title: "Create Room",
                     color: Colors.green.shade600,
@@ -354,30 +374,27 @@ class _HomeScreenState extends State<HomeScreen> {
                       showDialog(
                         context: context,
                         builder: (context) => AlertDialog(
-                          title: const Text("Nom de la Room"),
+                          title: const Text("Room Name"),
                           content: TextField(
                             controller: _roomNameController,
                             decoration: const InputDecoration(
-                              hintText: "Entrez un nom",
+                              hintText: "Enter a name",
                             ),
                           ),
                           actions: [
                             TextButton(
                               onPressed: () => Navigator.pop(context),
-                              child: const Text("Annuler"),
+                              child: const Text("Cancel"),
                             ),
                             ElevatedButton(
                               onPressed: () {
-                                final roomName =
-                                _roomNameController.text.trim();
+                                final roomName = _roomNameController.text.trim();
                                 if (roomName.isNotEmpty) {
-                                  context
-                                      .read<QuizBloc>()
-                                      .add(FetchQuizEvent());
+                                  context.read<QuizBloc>().add(FetchQuizEvent());
                                   Navigator.pop(context);
                                 }
                               },
-                              child: const Text("Créer"),
+                              child: const Text("Create"),
                             ),
                           ],
                         ),
@@ -386,29 +403,25 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                   const SizedBox(height: 12),
 
-                  // Browse Rooms
                   _buildActionButton(
                     title: "Browse Rooms",
                     color: Colors.amber.shade600,
                     onPressed: () {
                       Navigator.push(
                         context,
-                        MaterialPageRoute(
-                            builder: (_) => const RoomListScreen()),
+                        MaterialPageRoute(builder: (_) => const RoomListScreen()),
                       );
                     },
                   ),
                   const SizedBox(height: 12),
 
-                  // Leaderboard
                   _buildActionButton(
                     title: "View Leaderboard",
                     color: Colors.blue.shade600,
                     onPressed: () {
                       Navigator.push(
                         context,
-                        MaterialPageRoute(
-                            builder: (_) => const LeaderboardScreen()),
+                        MaterialPageRoute(builder: (_) => const LeaderboardScreen()),
                       );
                     },
                   ),

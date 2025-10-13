@@ -1,7 +1,11 @@
-import 'package:quizduel/core/error/app_failure.dart';
+import 'package:equatable/equatable.dart';
 
-enum RegisterStatus { initial, loading, success, failure }
-
+enum RegisterStatus {
+  initial,
+  loading,
+  success,
+  failure,
+}
 
 extension RegisterStatusX on RegisterStatus {
   bool get isInitial => this == RegisterStatus.initial;
@@ -10,36 +14,37 @@ extension RegisterStatusX on RegisterStatus {
   bool get isFailure => this == RegisterStatus.failure;
 }
 
-
-class RegisterState {
+class RegisterState extends Equatable {
   final RegisterStatus status;
-  final AppFailure? failure;
+  final String? failure; // 🔥 remplacé AppFailure par String
 
-  RegisterState({required this.status, this.failure});
+  const RegisterState({
+    required this.status,
+    this.failure,
+  });
 
-  factory RegisterState.initial() => RegisterState(
-        status: RegisterStatus.initial,
+  // 🔹 Factories
+  factory RegisterState.initial() => const RegisterState(
+    status: RegisterStatus.initial,
+  );
 
-      );
+  factory RegisterState.loading() => const RegisterState(
+    status: RegisterStatus.loading,
+  );
 
-  factory RegisterState.loading() => RegisterState(
-        status: RegisterStatus.loading,
+  factory RegisterState.success() => const RegisterState(
+    status: RegisterStatus.success,
+  );
 
-      );
+  factory RegisterState.failure(String message) => RegisterState(
+    status: RegisterStatus.failure,
+    failure: message,
+  );
 
-  factory RegisterState.success() => RegisterState(
-        status: RegisterStatus.success,
-
-      );
-
-  factory RegisterState.failure(AppFailure failure) => RegisterState(
-        status: RegisterStatus.failure,
-        failure: failure,
-      );
-
+  // 🔹 copyWith
   RegisterState copyWith({
     RegisterStatus? status,
-    AppFailure? failure,
+    String? failure,
   }) {
     return RegisterState(
       status: status ?? this.status,
@@ -47,5 +52,6 @@ class RegisterState {
     );
   }
 
+  @override
   List<Object?> get props => [status, failure];
 }

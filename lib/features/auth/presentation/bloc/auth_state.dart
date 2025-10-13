@@ -1,4 +1,4 @@
-import 'package:quizduel/core/error/app_failure.dart';
+import 'package:equatable/equatable.dart';
 import 'package:quizduel/features/auth/domain/entity/user_entity.dart';
 
 enum AuthStatus {
@@ -17,10 +17,10 @@ extension AuthStatusX on AuthStatus {
   bool get isFailure => this == AuthStatus.failure;
 }
 
-class AuthState {
+class AuthState extends Equatable {
   final AuthStatus status;
   final UserEntity? user;
-  final AppFailure? failure;
+  final String? failure; // <- maintenant c’est une simple String
 
   const AuthState({
     required this.status,
@@ -37,16 +37,15 @@ class AuthState {
   factory AuthState.unauthenticated() =>
       const AuthState(status: AuthStatus.unauthenticated);
 
-  factory AuthState.loading() =>
-      const AuthState(status: AuthStatus.loading);
+  factory AuthState.loading() => const AuthState(status: AuthStatus.loading);
 
-  factory AuthState.failure(AppFailure failure) =>
-      AuthState(status: AuthStatus.failure, failure: failure);
+  factory AuthState.failure(String message) =>
+      AuthState(status: AuthStatus.failure, failure: message);
 
   AuthState copyWith({
     AuthStatus? status,
     UserEntity? user,
-    AppFailure? failure,
+    String? failure, // <- correction ici
   }) {
     return AuthState(
       status: status ?? this.status,
@@ -55,5 +54,6 @@ class AuthState {
     );
   }
 
+  @override
   List<Object?> get props => [status, user, failure];
 }

@@ -1,3 +1,4 @@
+import 'package:equatable/equatable.dart';
 import 'package:quizduel/features/auth/domain/entity/user_entity.dart';
 import 'package:quizduel/features/room/domain/entitiy/room_entity.dart';
 
@@ -39,7 +40,7 @@ extension RoomStatusX on RoomStatus {
   bool get isError => this == RoomStatus.error;
 }
 
-class RoomState {
+class RoomState extends Equatable{
   final RoomStatus status;
   final String? errorMessage;
   final List<RoomEntity> availableRooms;
@@ -105,4 +106,7 @@ class RoomState {
       players: players ?? this.players,
     );
   }
+
+  @override
+  List<Object?> get props => [status, errorMessage, availableRooms, currentRoom, players];
 }

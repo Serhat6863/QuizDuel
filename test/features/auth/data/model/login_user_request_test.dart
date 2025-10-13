@@ -1,37 +1,32 @@
+import 'package:flutter_test/flutter_test.dart';
 import 'package:quizduel/features/auth/data/model/login_user_request.dart';
-import 'package:test/test.dart';
 
-void main(){
+void main() {
+  group("LoginUserRequestDto", () {
+    const email = "test@example.com";
+    const password = "mypassword";
 
-  group("login user request model", (){
+    final dto = LoginUserRequestDto(email: email, password: password);
 
-    const userJson = {
-      "email" : "test@gmail.com",
-      "password" : "password123",
+    final dtoJson = {
+      "email": email,
+      "password": password,
     };
 
-
-    final loginUserRequestModel = LoginUserRequestDto(
-      email: "test@gmail.com",
-      password: 'password123',
-    );
-
-
-    test("From json should return a valid model", (){
-      final result = LoginUserRequestDto.fromJson(userJson);
-
-      expect(result.email, loginUserRequestModel.email);
-      expect(result.password, loginUserRequestModel.password);
-
+    test("✅ toJson() retourne la bonne map", () {
+      expect(dto.toJson(), equals(dtoJson));
     });
 
-
-    test("To json should return a valid map", (){
-      final result = loginUserRequestModel.toJson();
-
-      expect(result, userJson);
+    test("✅ fromJson() crée une instance correcte", () {
+      final result = LoginUserRequestDto.fromJson(dtoJson);
+      expect(result.email, equals(email));
+      expect(result.password, equals(password));
     });
 
+    test("✅ fromJson() gère les champs manquants avec valeurs par défaut", () {
+      final result = LoginUserRequestDto.fromJson({});
+      expect(result.email, equals(''));
+      expect(result.password, equals(''));
+    });
   });
-
 }

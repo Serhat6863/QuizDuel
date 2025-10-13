@@ -47,6 +47,10 @@ dependencies:
   retrofit_generator: ^10.0.6
   logger: ^2.6.1
   html_unescape: ^2.0.0
+  audioplayers: ^6.5.1
+  flutter_launcher_icons: ^0.14.4
+  mocktail: ^1.0.4
+  bloc_test: ^10.0.0
 
 dev_dependencies:
   flutter_test:
@@ -65,6 +69,8 @@ dev_dependencies:
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
 
+
+
 # The following section is specific to Flutter packages.
 flutter:
 
@@ -74,11 +80,14 @@ flutter:
   uses-material-design: true
 
   # To add assets to your application, add an assets section, like this:
-  assets:
-    - assets/images/
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images
+
+  assets:
+    - assets/icon/icon.png
+    - assets/sound/negative.mp3
+    - assets/sound/winner.mp3
 
   # For details regarding adding assets from package dependencies, see
   # https://flutter.dev/to/asset-from-package

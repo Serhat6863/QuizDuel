@@ -7,4 +7,5 @@ abstract class UserRepository {
   Future<UserEntity?> getCurrentUser();
   Future<String> getUsernameById(String userId);
   Future<List<UserEntity>> getAllUsers();
+  Future<void> updateScore(String userId, int newScore);
 }

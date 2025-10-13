@@ -79,65 +79,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
           backgroundColor: const Color(0xFFF5E6C4),
           body: Column(
             children: [
-              // HEADER
-              Container(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [
-                      Colors.deepPurple.shade400,
-                      Colors.deepPurple.shade600,
-                    ],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                  borderRadius: const BorderRadius.only(
-                    bottomLeft: Radius.circular(30),
-                    bottomRight: Radius.circular(30),
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.2),
-                      blurRadius: 8,
-                      offset: const Offset(0, 4),
-                    ),
-                  ],
-                ),
-                padding: const EdgeInsets.only(top: 50, bottom: 25),
-                child: Row(
-                  children: [
-                    const SizedBox(width: 20),
-                    GestureDetector(
-                      onTap: () => Navigator.pop(context),
-                      child: Container(
-                        decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.2),
-                          borderRadius: BorderRadius.circular(14),
-                          border: Border.all(
-                            color: Colors.white.withOpacity(0.3),
-                          ),
-                        ),
-                        padding: const EdgeInsets.all(8),
-                        child: const Icon(
-                          CupertinoIcons.back,
-                          color: Colors.white,
-                          size: 22,
-                        ),
-                      ),
-                    ),
-                    const Spacer(),
-                    const Text(
-                      "Register",
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 22,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const Spacer(flex: 2),
-                  ],
-                ),
-              ),
-
               // BODY
               Expanded(
                 child: Center(
@@ -146,12 +87,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        // 🖼️ Logo ou image plus tard
-                        Image.asset(
-                          "assets/images/quiz.png",
-                          height: 100,
-                        ),
-                        const SizedBox(height: 16),
+
                         const Text(
                           "Create Account",
                           style: TextStyle(

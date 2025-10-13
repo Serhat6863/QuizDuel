@@ -1,3 +1,4 @@
+import 'package:equatable/equatable.dart';
 import 'package:quizduel/features/game/domain/entity/quiz_entity.dart';
 
 enum QuizStatus{
@@ -14,12 +15,12 @@ extension QuizStatusX on QuizStatus{
   bool get isError => this == QuizStatus.error;
 }
 
-class QuizState{
+class QuizState extends Equatable{
   final QuizStatus status;
   final String? message;
   final List<QuizEntity> quizzes;
 
-  QuizState({
+  const QuizState({
     required this.status,
     this.message,
     required this.quizzes,
@@ -57,6 +58,9 @@ class QuizState{
       quizzes: quizzes ?? this.quizzes,
     );
   }
+
+  @override
+  List<Object?> get props => [status, message, quizzes];
 
 
 }

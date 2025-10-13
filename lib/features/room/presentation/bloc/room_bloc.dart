@@ -28,7 +28,7 @@ class RoomBloc extends Bloc<RoomEvent, RoomState> {
     on<GetRoomByIdEvent>(_onGetRoomById);
   }
 
-  /// ✅ Créer une room
+  ///  Créer une room
   Future<void> _onCreateRoom(
       CreateRoomEvent event,
       Emitter<RoomState> emit,
@@ -62,7 +62,7 @@ class RoomBloc extends Bloc<RoomEvent, RoomState> {
     }
   }
 
-  /// ✅ Rejoindre une room
+  ///  Rejoindre une room
   Future<void> _onJoinRoom(
       JoinRoomEvent event,
       Emitter<RoomState> emit,
@@ -92,7 +92,7 @@ class RoomBloc extends Bloc<RoomEvent, RoomState> {
     }
   }
 
-  /// ✅ Quitter une room
+  ///  Quitter une room
   Future<void> _onLeaveRoom(
       LeaveRoomEvent event,
       Emitter<RoomState> emit,
@@ -108,7 +108,7 @@ class RoomBloc extends Bloc<RoomEvent, RoomState> {
     }
   }
 
-  /// ✅ Supprimer une room
+  ///  Supprimer une room
   Future<void> _onDeleteRoom(
       DeleteRoomEvent event,
       Emitter<RoomState> emit,
@@ -124,7 +124,7 @@ class RoomBloc extends Bloc<RoomEvent, RoomState> {
     }
   }
 
-  /// ✅ Récupérer les rooms disponibles
+  ///  Récupérer les rooms disponibles
   Future<void> _onFetchAvailableRooms(
       FetchAvailableRoomsEvent event,
       Emitter<RoomState> emit,
@@ -142,7 +142,7 @@ class RoomBloc extends Bloc<RoomEvent, RoomState> {
     }
   }
 
-  /// ✅ Écouter les joueurs d’une room
+  ///  Écouter les joueurs d’une room
   Future<void> _onListenPlayers(
       ListenPlayersEvent event,
       Emitter<RoomState> emit,
@@ -174,7 +174,7 @@ class RoomBloc extends Bloc<RoomEvent, RoomState> {
           logger.d("📢 Status de la room ${event.roomId} mis à jour: ${status}");
 
           if (status.isPlaying) {
-            // ✅ On envoie la room actuelle dans le nouvel état
+            //  On envoie la room actuelle dans le nouvel état
             return RoomState.gameStarted(state.currentRoom!);
           } else {
             return state;
@@ -203,22 +203,30 @@ class RoomBloc extends Bloc<RoomEvent, RoomState> {
     }
   }
 
-  Future<void> _onUpdateFinalScore(UpdateFinalScoreEvent event , Emitter<RoomState> emit) async{
+  Future<void> _onUpdateFinalScore(UpdateFinalScoreEvent event, Emitter<RoomState> emit) async {
     emit(state.copyWith(status: RoomStatus.updatingScore));
 
-    try{
-      logger.i("🔄 Mise à jour du score final de ${event.userId} dans la room ${event.roomId} à ${event.newScore}");
-      await roomRepository.updateRoomScore(event.roomId, event.userId, event.newScore);
-      logger.i("✅ Score final mis à jour pour ${event.userId} dans la room ${event.roomId} à ${event.newScore}");
+    try {
+      logger.i("🔄 Updating final score of ${event.userId} to ${event.newScore} in room ${event.roomId}");
 
+      //  1. Update score in User collection (global leaderboard)
+      await userRepository.updateScore(event.userId, event.newScore);
+      logger.i("✅ User global score updated in Firestore");
+
+      //  2. Update score inside the Room document (for leaderboard in room)
+      await roomRepository.updateRoomScore(event.roomId, event.userId, event.newScore);
+      logger.i("✅ Score updated inside room");
+
+      //  3. Refresh current room to get updated scores
       final updatedRoom = await roomRepository.getRoomById(event.roomId);
 
       emit(RoomState.scoreUpdated(updatedRoom));
-    }catch(e){
-      logger.e("❌ Erreur lors de la mise à jour du score final pour ${event.userId} dans la room ${event.roomId}", error: e);
-      emit(RoomState.error("Erreur mise à jour score: ${e.toString()}"));
+    } catch (e, s) {
+      logger.e("❌ Error while updating final score for ${event.userId}", error: e, stackTrace: s);
+      emit(RoomState.error("Error updating final score: ${e.toString()}"));
     }
   }
+
 
 
   Future<void> _onGetRoomById(GetRoomByIdEvent event, Emitter<RoomState> emit) async{

@@ -1,4 +1,4 @@
-class LoginUserRequestDto{
+class LoginUserRequestDto {
   final String email;
   final String password;
 
@@ -16,8 +16,8 @@ class LoginUserRequestDto{
 
   factory LoginUserRequestDto.fromJson(Map<String, dynamic> json) {
     return LoginUserRequestDto(
-      email: json['email'],
-      password: json['password'],
+      email: (json['email'] ?? '') as String,
+      password: (json['password'] ?? '') as String,
     );
   }
 }

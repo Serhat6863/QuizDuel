@@ -23,12 +23,12 @@ class _RoomListScreenState extends State<RoomListScreen> {
   @override
   void initState() {
     super.initState();
-    logger.i("📡 Chargement initial des rooms...");
+    logger.i("📡 Initial loading of rooms...");
     context.read<RoomBloc>().add(FetchAvailableRoomsEvent());
   }
 
   Future<void> _onRefresh() async {
-    logger.i("🔄 Rafraîchissement manuel de la liste des rooms");
+    logger.i("🔄 Manual refresh of room list");
     context.read<RoomBloc>().add(FetchAvailableRoomsEvent());
   }
 
@@ -61,7 +61,7 @@ class _RoomListScreenState extends State<RoomListScreen> {
               ),
               const SizedBox(height: 8),
               const Text(
-                "Merci de patienter quelques secondes ⏳",
+                "Please wait a few seconds ⏳",
                 textAlign: TextAlign.center,
                 style: TextStyle(color: Colors.black54),
               ),
@@ -101,7 +101,7 @@ class _RoomListScreenState extends State<RoomListScreen> {
       backgroundColor: const Color(0xFFF5E6C4),
       body: Column(
         children: [
-          // 🌟 HEADER (inchangé)
+          // 🌟 HEADER
           Container(
             decoration: BoxDecoration(
               gradient: LinearGradient(
@@ -129,9 +129,10 @@ class _RoomListScreenState extends State<RoomListScreen> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
+                // 🔙 Back button
                 GestureDetector(
                   onTap: () {
-                    logger.i("↩️ Retour à la page précédente");
+                    logger.i("↩️ Back to previous screen");
                     Navigator.pop(context);
                   },
                   child: Container(
@@ -166,17 +167,17 @@ class _RoomListScreenState extends State<RoomListScreen> {
               listener: (context, state) {
                 switch (state.status) {
                   case RoomStatus.joiningRoom:
-                    _showLoadingDialog(context, "Connexion à la room...");
+                    _showLoadingDialog(context, "Joining room...");
                     break;
 
                   case RoomStatus.roomCreated:
                     _closeDialog(context);
                     if (state.currentRoom != null && mounted) {
                       logger.i(
-                          "✅ Connexion réussie à la room: ${state.currentRoom!.roomName}");
+                          "✅ Successfully joined room: ${state.currentRoom!.roomName}");
                       _showSnackBar(
-                        "Succès",
-                        "Tu as bien rejoint la room ${state.currentRoom!.roomName}",
+                        "Success",
+                        "You successfully joined ${state.currentRoom!.roomName}",
                         ContentType.success,
                       );
                       Navigator.push(
@@ -192,8 +193,8 @@ class _RoomListScreenState extends State<RoomListScreen> {
                   case RoomStatus.error:
                     _closeDialog(context);
                     _showSnackBar(
-                      "Erreur",
-                      state.errorMessage ?? "Impossible de rejoindre la room",
+                      "Error",
+                      state.errorMessage ?? "Unable to join the room.",
                       ContentType.failure,
                     );
                     break;
@@ -220,7 +221,7 @@ class _RoomListScreenState extends State<RoomListScreen> {
                           SizedBox(height: 200),
                           Center(
                             child: Text(
-                              "Aucune room disponible 🚪",
+                              "No rooms available 🚪",
                               style: TextStyle(
                                 fontSize: 16,
                                 color: Colors.black54,
@@ -233,7 +234,6 @@ class _RoomListScreenState extends State<RoomListScreen> {
                   }
 
                   final user = context.read<AuthBloc>().state.user!;
-
 
                   return RefreshIndicator(
                     onRefresh: _onRefresh,
@@ -265,7 +265,7 @@ class _RoomListScreenState extends State<RoomListScreen> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              // Nom + type
+                              // Room name + type
                               Row(
                                 mainAxisAlignment:
                                 MainAxisAlignment.spaceBetween,
@@ -295,7 +295,7 @@ class _RoomListScreenState extends State<RoomListScreen> {
                               ),
                               const SizedBox(height: 24),
 
-                              // Joueurs + Questions
+                              // Players + Questions info
                               Row(
                                 children: [
                                   const Icon(Icons.people_alt,
@@ -319,7 +319,7 @@ class _RoomListScreenState extends State<RoomListScreen> {
                               ),
                               const SizedBox(height: 24),
 
-                              // Statut
+                              // Status + Join button
                               Row(
                                 children: [
                                   Container(
@@ -330,8 +330,10 @@ class _RoomListScreenState extends State<RoomListScreen> {
                                       borderRadius: BorderRadius.circular(8),
                                     ),
                                     child: Text(
-                                      room.status.toShortString().toUpperCase(),
-                                      style: TextStyle(
+                                      room.status
+                                          .toShortString()
+                                          .toUpperCase(),
+                                      style: const TextStyle(
                                         color: Colors.white,
                                         fontSize: 12,
                                         fontWeight: FontWeight.w500,
@@ -342,13 +344,18 @@ class _RoomListScreenState extends State<RoomListScreen> {
                                   const Spacer(),
 
                                   GestureDetector(
-                                    onTap: (){
-                                      if(room.status.isWaiting) {
-                                        context.read<RoomBloc>().add(JoinRoomEvent(roomId: room.roomId, userEntity: user));
-                                      } else{
+                                    onTap: () {
+                                      if (room.status.isWaiting) {
+                                        context.read<RoomBloc>().add(
+                                          JoinRoomEvent(
+                                            roomId: room.roomId,
+                                            userEntity: user,
+                                          ),
+                                        );
+                                      } else {
                                         _showSnackBar(
-                                          "Impossible de rejoindre",
-                                          "La partie a déjà commencé ou est terminée.",
+                                          "Unable to Join",
+                                          "This game has already started or finished.",
                                           ContentType.warning,
                                         );
                                       }
@@ -361,8 +368,7 @@ class _RoomListScreenState extends State<RoomListScreen> {
                                         fontWeight: FontWeight.bold,
                                       ),
                                     ),
-                                  )
-
+                                  ),
                                 ],
                               ),
                             ],

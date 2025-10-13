@@ -55,9 +55,15 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     return BlocConsumer<LoginBloc, LoginState>(
-      listener: (context, state) {
+      listener: (context, state) async {
         if (state.status.isSuccess) {
+          // 🔥Notifie le AuthBloc que l’utilisateur est connecté
           context.read<AuthBloc>().add(LoggedIn());
+
+          // Attendre un court instant que Firebase initialise bien le user
+          await Future.delayed(const Duration(milliseconds: 400));
+
+          // Redirige vers la HomeScreen
           Navigator.of(context).pushReplacement(
             MaterialPageRoute(builder: (_) => const HomeScreen()),
           );
@@ -68,66 +74,6 @@ class _LoginScreenState extends State<LoginScreen> {
           backgroundColor: const Color(0xFFF5E6C4),
           body: Column(
             children: [
-              // HEADER
-              Container(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [
-                      Colors.deepPurple.shade400,
-                      Colors.deepPurple.shade600,
-                    ],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                  borderRadius: const BorderRadius.only(
-                    bottomLeft: Radius.circular(30),
-                    bottomRight: Radius.circular(30),
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.2),
-                      blurRadius: 8,
-                      offset: const Offset(0, 4),
-                    ),
-                  ],
-                ),
-                padding: const EdgeInsets.only(top: 50, bottom: 25),
-                child: Row(
-                  children: [
-                    const SizedBox(width: 20),
-                    GestureDetector(
-                      onTap: () => Navigator.pop(context),
-                      child: Container(
-                        decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.2),
-                          borderRadius: BorderRadius.circular(14),
-                          border: Border.all(
-                            color: Colors.white.withOpacity(0.3),
-                          ),
-                        ),
-                        padding: const EdgeInsets.all(8),
-                        child: const Icon(
-                          CupertinoIcons.back,
-                          color: Colors.white,
-                          size: 22,
-                        ),
-                      ),
-                    ),
-                    const Spacer(),
-                    const Text(
-                      "Login",
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 22,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const Spacer(flex: 2),
-                  ],
-                ),
-              ),
-
-              // BODY
               Expanded(
                 child: Center(
                   child: SingleChildScrollView(
@@ -135,13 +81,14 @@ class _LoginScreenState extends State<LoginScreen> {
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        // 🖼️ Ton image/logo ici (facultatif pour le moment)
-                        // Ajoute ton logo ici plus tard : assets/images/quiz.png
+
+
                         Image.asset(
-                          "assets/images/quiz.png",
-                          height: 100,
+                          "assets/icon/icon.png",
+                          height: 120,
+                          width: 120,
                         ),
-                        const SizedBox(height: 16),
+
                         const Text(
                           "Welcome Back!",
                           style: TextStyle(
@@ -152,7 +99,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         ),
                         const SizedBox(height: 30),
 
-                        // ✨ Card blanche pour le formulaire
+                        // ✨ Login form card
                         Container(
                           width: double.infinity,
                           padding: const EdgeInsets.all(24),

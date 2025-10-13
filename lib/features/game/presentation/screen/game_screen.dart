@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:html_unescape/html_unescape.dart';
@@ -9,7 +10,6 @@ import 'package:quizduel/features/room/presentation/bloc/room_bloc.dart';
 import 'package:quizduel/features/room/presentation/bloc/room_event.dart';
 
 class GameScreen extends StatefulWidget {
-
   final RoomEntity roomEntity;
 
   const GameScreen({super.key, required this.roomEntity});
@@ -20,8 +20,7 @@ class GameScreen extends StatefulWidget {
 
 class _GameScreenState extends State<GameScreen> {
 
-
-
+  final player = AudioPlayer();
   int score = 0;
   int questionNumber = 0;
   int totalQuestions = 10;
@@ -30,7 +29,7 @@ class _GameScreenState extends State<GameScreen> {
   late final currentUser;
   final unescape = HtmlUnescape();
 
-  int timeLeft = 10; // temps en secondes
+  int timeLeft = 10; // time in seconds
   Timer? timer;
 
   @override
@@ -40,34 +39,33 @@ class _GameScreenState extends State<GameScreen> {
     currentUser = context.read<AuthBloc>().state.user!;
   }
 
-
-  void nextQuestion(){
-    if(questionNumber < totalQuestions -1){
+  void nextQuestion() {
+    if (questionNumber < totalQuestions - 1) {
       setState(() {
         questionNumber++;
         selectedAnswerIndex = null;
         isAnswerCorrect = null;
       });
       startTimer();
-    }else{
-      //update last score to roomEntity player
+    } else {
+      // ✅ Update final score in the room
       context.read<RoomBloc>().add(UpdateFinalScoreEvent(
         roomId: widget.roomEntity.roomId,
         userId: currentUser.id,
         newScore: score,
       ));
+
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
-          builder: (context) => WinnerScreen(roomEntity: widget.roomEntity,),
-        )
+          builder: (context) => WinnerScreen(roomEntity: widget.roomEntity),
+        ),
       );
     }
   }
 
-
   void startTimer() {
-    timer?.cancel(); // reset si déjà lancé
+    timer?.cancel(); // reset if already running
     timeLeft = 10;
     timer = Timer.periodic(const Duration(seconds: 1), (t) {
       if (timeLeft > 0) {
@@ -126,9 +124,10 @@ class _GameScreenState extends State<GameScreen> {
                     Text(
                       "Score: $score",
                       style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold),
+                        color: Colors.white,
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ],
                 ),
@@ -153,39 +152,39 @@ class _GameScreenState extends State<GameScreen> {
                 )
               ],
             ),
-            child:  Text(
+            child: Text(
               unescape.convert(widget.roomEntity.quiz[questionNumber].question),
               textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.w600),
+              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w600),
             ),
           ),
 
           const SizedBox(height: 30),
 
-          // RÉPONSES
+          // ANSWERS
           Expanded(
             child: Padding(
               padding: const EdgeInsets.all(8.0),
               child: ListView.builder(
                 itemCount: widget.roomEntity.quiz[questionNumber].options.length,
-                itemBuilder: (context, index){
-                  final answer = widget.roomEntity.quiz[questionNumber];
-                  final decodedOption = unescape.convert(answer.options[index]);
-                  final isCorrect = index == widget.roomEntity.quiz[questionNumber].correctAnswerIndex;
-                  return _buildAnswerButton(decodedOption, isCorrect);
-                }
+                itemBuilder: (context, index) {
+                  final question = widget.roomEntity.quiz[questionNumber];
+                  final decodedOption = unescape.convert(question.options[index]);
+                  final isCorrect =
+                      index == question.correctAnswerIndex;
+                  return _buildAnswerButton(decodedOption, isCorrect, index);
+                },
               ),
-            )
+            ),
           ),
 
-
-          // TIMER EN BAS
+          // TIMER AT THE BOTTOM
           Padding(
             padding: const EdgeInsets.all(20),
             child: Column(
               children: [
                 Text(
-                  "Temps restant: $timeLeft s",
+                  "Time left: $timeLeft s",
                   style: const TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
@@ -206,34 +205,51 @@ class _GameScreenState extends State<GameScreen> {
     );
   }
 
-  Widget _buildAnswerButton(String text, bool isCorrect) {
+  Widget _buildAnswerButton(String text, bool isCorrect, int index) {
+    final correctIndex = widget.roomEntity.quiz[questionNumber].correctAnswerIndex;
+
+    Color buttonColor() {
+      if (selectedAnswerIndex == null) return Colors.blue.shade600; // 🟦 Bleu de base
+      if (index == selectedAnswerIndex && selectedAnswerIndex == correctIndex) return Colors.green; // ✅ Bonne réponse
+      if (index == selectedAnswerIndex && selectedAnswerIndex != correctIndex) {
+        return Colors.red; // ❌ Mauvaise réponse choisie
+      }
+      if(index == correctIndex){
+        return Colors.green; // ✅ Bonne réponse non choisie
+      }
+      return Colors.blue.shade600;
+    }
+
     return Container(
       margin: const EdgeInsets.only(bottom: 15),
       child: ElevatedButton(
         onPressed: () {
+          if (selectedAnswerIndex != null) return;
+
           setState(() {
-            selectedAnswerIndex = widget.roomEntity.quiz[questionNumber].options.indexOf(text);
+            selectedAnswerIndex = index;
             isAnswerCorrect = isCorrect;
+
             if (isCorrect) {
               score += 10;
+              player.stop();
+              player.play(AssetSource("sound/winner.mp3"));
+            } else {
+              player.stop();
+              player.play(AssetSource("sound/negative.mp3"));
             }
           });
-          // reset timer pour la prochaine question
+
         },
         style: ElevatedButton.styleFrom(
-          backgroundColor: selectedAnswerIndex == widget.roomEntity.quiz[questionNumber].options.indexOf(text)
-              ? (isAnswerCorrect! ? Colors.green : Colors.red)
-              : Colors.blue,
+          backgroundColor: buttonColor(),
           padding: const EdgeInsets.symmetric(vertical: 16),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          foregroundColor: Colors.white,
         ),
-        child: Text(
-          text,
-          style: const TextStyle(fontSize: 18, color: Colors.white),
-        ),
+        child: Text(text, style: const TextStyle(fontSize: 18)),
       ),
     );
   }
+
 }
