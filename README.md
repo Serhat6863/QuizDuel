@@ -5,7 +5,7 @@
 ![Firebase](https://img.shields.io/badge/Firebase-Firestore%20%26%20Realtime%20DB-orange?logo=firebase)
 ![BLoC](https://img.shields.io/badge/State%20Management-BLoC-purple)
 ![API](https://img.shields.io/badge/API-Open%20Trivia%20DB-green)
-![Status](https://img.shields.io/badge/Status-En%20cours-yellow)
+![Status](https://img.shields.io/badge/Status-Terminé-brightgreen)
 
 ---
 
@@ -18,14 +18,34 @@ L’objectif : permettre à plusieurs joueurs de rejoindre une *room*, participe
 
 ---
 
-## 🌟 Fonctionnalités principales (en cours)
+## 🌟 Fonctionnalités principales
 
 - 🏠 **Création & jointure de rooms multijoueur**  
 - 🔥 **Synchronisation temps réel** via **Firebase Realtime Database**  
 - 🧩 **Questions dynamiques** depuis l’**API Open Trivia DB**  
 - 🧠 **Gestion des joueurs et du host** (créateur de la room)  
 - 🏆 **Affichage du classement final** après chaque partie  
-- 💬 **Interface fluide et moderne** avec gestion d’état via **BLoC**
+- 💬 **Interface fluide et moderne** avec gestion d’état via **BLoC**  
+- 🔊 **Effets sonores** pour bonnes et mauvaises réponses  
+
+---
+
+## 🖼️ Aperçu de l'application
+
+<div align="center">
+
+| | |
+|:--:|:--:|
+| ![Login](screenshots/login_screen.png) | ![Register](screenshots/register_screen.png) |
+| *Écrans d'authentification* | *Création de compte* |
+| ![Home](screenshots/home_screen.png) | ![Available Room](screenshots/available_room_screen.png) |
+| *Accueil du joueur* | *Liste des rooms disponibles* |
+| ![Question](screenshots/question_screen.png) | ![Correct Answer](screenshots/correct_answer_screen.png) |
+| *Question du quiz* | *Réponse correcte affichée* |
+| ![Winner](screenshots/winner_screen.png) | ![Leaderboard](screenshots/leaderboard_screen.png) |
+| *Résultats finaux* | *Classement des joueurs* |
+
+</div>
 
 ---
 
@@ -38,6 +58,7 @@ L’objectif : permettre à plusieurs joueurs de rejoindre une *room*, participe
 - **Backend** : Firebase (Firestore + Realtime Database)  
 - **API externe** : [Open Trivia DB](https://opentdb.com/)  
 - **HTTP Client** : Dio + Retrofit  
+- **Testing** : bloc_test, mocktail, flutter_test  
 
 ---
 
@@ -49,7 +70,9 @@ L’objectif : permettre à plusieurs joueurs de rejoindre une *room*, participe
 | `firebase_core`, `cloud_firestore`, `firebase_database` | Backend et données en temps réel |
 | `dio`, `retrofit`, `json_serializable` | Appels API Open Trivia et parsing JSON |
 | `equatable` | Modèles immuables et égalité structurée |
+| `audioplayers` | Effets sonores de feedback |
 | `awesome_snackbar_content` | Messages visuels personnalisés |
+| `mocktail`, `bloc_test` | Tests unitaires et de BLoC |
 
 ---
 
@@ -64,7 +87,7 @@ L’objectif : permettre à plusieurs joueurs de rejoindre une *room*, participe
 ### Étapes
 ```bash
 # Cloner le projet
-git clone https://github.com/votre-username/quizduel.git
+git clone https://github.com/Serhat6863/QuizDuel.git
 
 # Aller dans le dossier
 cd quizduel
@@ -74,75 +97,95 @@ flutter pub get
 
 # Lancer l’application
 flutter run
-
 ```
+
 ---
 
-🏗️ Architecture du projet (en cours)
+## 🏗️ Architecture du projet
+
 ```
 QuizDuel/
 ├── lib/
 │   ├── core/
-│   │   ├── error/                  # Gestion des erreurs
-│   │   └── utils/                  # Méthodes utilitaires et constantes
+│   │   ├── error/                     # Gestion des erreurs globales
+│   │   └── utils/                     # Méthodes utilitaires et helpers (ex: logger)
+│   │
 │   ├── features/
-│   │   ├── auth/                   # Authentification utilisateur
-│   │   │   ├── data/
+│   │   ├── auth/                      # Authentification (inscription, login, etc.)
+│   │   │   ├── data/                  # Couche data (API, Firebase, modèles)
 │   │   │   │   ├── model/
 │   │   │   │   ├── repository/
 │   │   │   │   └── service/
-│   │   │   ├── domain/
-│   │   │   └── presentation/
-│   │   │       ├── bloc/
-│   │   │       ├── screen/
-│   │   │       └── widget/
-│   │   ├── room/                   # Gestion des rooms
-│   │   │   ├── data/
+│   │   │   ├── domain/                # Entités, usecases et contrats de repository
+│   │   │   └── presentation/          # Interface utilisateur + logique de présentation
+│   │   │       ├── bloc/              # AuthBloc, états et événements
+│   │   │       ├── screen/            # Écrans Login / Register
+│   │   │       └── widget/            # Widgets réutilisables d'authentification
+│   │   │
+│   │   ├── room/                      # Gestion des salons (rooms) de quiz
+│   │   │   ├── data/                  
 │   │   │   │   ├── model/
 │   │   │   │   ├── repository/
 │   │   │   │   └── service/
-│   │   │   ├── domain/
-│   │   │   │   ├── entity/
-│   │   │   │   ├── enums/
-│   │   │   │   └── repository/
-│   │   │   └── presentation/
-│   │   │       ├── bloc/
-│   │   │       ├── screen/
-│   │   │       └── widget/
-│   │   └── game/                   # Logique du quiz
+│   │   │   ├── domain/                
+│   │   │   │   ├── entity/            # RoomEntity, UserEntity, etc.
+│   │   │   │   ├── enums/             # États et types des rooms
+│   │   │   │   └── repository/        # Interfaces des repositories
+│   │   │   └── presentation/          
+│   │   │       ├── bloc/              # RoomBloc : création, jointure, suppression
+│   │   │       ├── screen/            # RoomHomeScreen, RoomListScreen, etc.
+│   │   │       └── widget/            # Composants UI (cards, listes, etc.)
+│   │   │
+│   │   └── game/                      # Logique du quiz multijoueur
 │   │       ├── data/
 │   │       ├── domain/
 │   │       └── presentation/
-│   │           ├── bloc/
-│   │           ├── screen/
-│   │           └── widget/
-│   ├── firebase_options.dart       # Configuration Firebase
-│   └── main.dart                   # Point d’entrée principal
+│   │           ├── bloc/              # GameBloc : gestion du quiz, score, timer
+│   │           ├── screen/            # GameScreen, WinnerScreen
+│   │           └── widget/            # Widgets du quiz (options, timer, etc.)
+│   │
+│   ├── firebase_options.dart          # Configuration Firebase (auto-généré)
+│   └── main.dart                      # Point d’entrée principal de l’app Flutter
+│
+├── screenshots/                       # Captures d’écran du projet
+│   ├── login_screen.png
+│   ├── register_screen.png
+│   ├── home_screen.png
+│   ├── available_room_screen.png
+│   ├── question_screen.png
+│   ├── correct_answer_screen.png
+│   ├── leaderboard_screen.png
+│   ├── winner_screen.png
+│   └── ...
+│
 ├── assets/
-│   └── images/                     # Ressources visuelles
-├── test/
-│   └── ...                         # Tests unitaires à venir
-└── pubspec.yaml
+│   ├── images/                        # Ressources visuelles (logos, backgrounds)
+│   └── sound/                         # Effets sonores (bonne/mauvaise réponse)
+│
+└── pubspec.yaml                       # Dépendances, assets et configuration globale
+
 ```
 
 ---
 
 ## 📅 Statut du projet
 
-🚧 **En cours de développement**
+✅ **Projet terminé** – dernière version stable disponible sur GitHub.
 
-L’application **QuizDuel** est actuellement en phase de développement actif.  
-Certaines fonctionnalités clés sont déjà terminées, tandis que d’autres sont encore en cours d’implémentation ou prévues dans les prochaines itérations.
+L’application **QuizDuel** est finalisée et fonctionnelle.  
+Toutes les fonctionnalités principales sont implémentées, testées et intégrées à l’architecture Clean (Data / Domain / Presentation).
 
 | 🧩 Fonctionnalité | 📌 Statut | 📝 Détails |
 |------------------|-----------|------------|
-| **Authentification utilisateur** | ✅ Terminée | Connexion et gestion des utilisateurs via Firebase Auth |
+| **Authentification utilisateur** | ✅ Terminée | Connexion, inscription et gestion des utilisateurs via Firebase Auth |
 | **Création / jointure de room** | ✅ Terminée | Les joueurs peuvent créer ou rejoindre une partie en temps réel |
-| **Suppression automatique d’une room** | ✅ Terminée | La room est supprimée quand le host quitte la partie |
-| **Intégration API Open Trivia** | ✅ Terminée | Récupération des questions de quiz avec Retrofit & Dio |
-| **Système de quiz multijoueur** | 🚧 En cours | Synchronisation des questions et réponses entre plusieurs joueurs |
-| **Classement final & interface UI** | 🔜 À venir | Affichage des scores finaux et amélioration de la présentation |
-| **Refactorisation architecture** | 🔜 Prévue | Optimisation du code et restructuration des couches Domain/Data/Presentation |
+| **Suppression automatique d’une room** | ✅ Terminée | Suppression automatique lorsqu’un host quitte la partie |
+| **Intégration API Open Trivia** | ✅ Terminée | Récupération dynamique des questions via Retrofit & Dio |
+| **Système de quiz multijoueur** | ✅ Terminé | Synchronisation temps réel des questions et scores |
+| **Classement final & interface UI** | ✅ Terminée | Affichage des résultats finaux et WinnerScreen |
+| **Refactorisation architecture** | ✅ Finalisée | Architecture Clean stable et testée |
+| **Tests unitaires & BLoC** | ✅ Terminés | Utilisation de `bloc_test` et `mocktail` |
+| **Effets sonores et feedback visuel** | ✅ Terminés | Gestion audio avec `audioplayers` |
 
 ---
 
