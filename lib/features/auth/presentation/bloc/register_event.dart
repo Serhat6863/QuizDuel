@@ -16,3 +16,8 @@ class RegisterButtonPressed extends RegisterEvent{
   @override
   List<Object?> get props => [email, password, username];
 }
+
+
+class ResentEmailVerification extends RegisterEvent{}
+
+class CheckEmailVerified extends RegisterEvent{}

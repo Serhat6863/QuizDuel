@@ -1,10 +1,13 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:quizduel/core/utils/logger.dart';
 import 'package:quizduel/features/auth/data/model/user_model.dart';
 
 class FirebaseUserService {
   final FirebaseAuth auth = FirebaseAuth.instance;
   final FirebaseFirestore firestore = FirebaseFirestore.instance;
+  final user = FirebaseAuth.instance.currentUser;
+
 
   // login with email and password
   Future<UserModel?> signInWithEmailAndPassword(
@@ -41,11 +44,7 @@ class FirebaseUserService {
   }
 
   // register
-  Future<UserModel?> registerWithEmailAndPassword(
-      String email,
-      String username,
-      String password,
-      ) async {
+  Future<UserModel?> registerWithEmailAndPassword(String email, String username, String password,) async {
     try {
       UserCredential userCredential =
       await auth.createUserWithEmailAndPassword(email: email, password: password);
@@ -54,6 +53,11 @@ class FirebaseUserService {
 
       final user = userCredential.user;
       if (user == null) return null;
+
+      if(!user.emailVerified){
+        await user.sendEmailVerification();
+        logger.d("Email sent");
+      }
 
       final userModel = UserModel(
         id: user.uid,
@@ -80,7 +84,7 @@ class FirebaseUserService {
     final user = auth.currentUser;
     if (user == null) return null;
 
-    // 🔁 On tente plusieurs fois si Firestore n’a pas encore le doc (après un register/login)
+
     for (int i = 0; i < 3; i++) {
       final doc = await firestore.collection("users").doc(user.uid).get();
       if (doc.exists) {
@@ -88,8 +92,6 @@ class FirebaseUserService {
       }
       await Future.delayed(const Duration(milliseconds: 300));
     }
-
-    // 🔥 Si après 3 essais aucun doc Firestore, on renvoie null (pas un fallback vide)
     return null;
   }
 
@@ -127,6 +129,64 @@ class FirebaseUserService {
       throw Exception("Error updating score: $e");
     }
   }
+
+
+  Future<bool> checkEmailVerified() async {
+    try{
+      final user = auth.currentUser;
+      if (user != null) {
+        await user.reload();
+        return user.emailVerified;
+      }
+      return false;
+    }catch(e){
+      throw Exception("Error in FirebaseUserService.checkEmailVerified: $e");
+    }
+
+  }
+
+  Future<void> resentEmailVerification() async {
+    try{
+      final user = auth.currentUser;
+      if (user != null && !user.emailVerified) {
+        await user.sendEmailVerification();
+      }
+    }catch(e){
+      throw Exception("Error in FirebaseUserService.resentEmailVerification: $e");
+    }
+
+  }
+
+  Future<void> deleteAccount() async {
+    try {
+      final user = auth.currentUser;
+      if (user == null) return;
+
+      // 🔹 Supprime le document utilisateur dans Firestore
+      final userDoc = firestore.collection("users").doc(user.uid);
+      final docSnapshot = await userDoc.get();
+
+      if (docSnapshot.exists) {
+        await userDoc.delete();
+      }
+
+      // 🔹 Supprime le compte Firebase Auth
+      await user.delete();
+
+    } on FirebaseAuthException catch (e) {
+      if (e.code == 'requires-recent-login') {
+        throw Exception("You need to log in again before deleting your account.");
+      } else {
+        throw Exception("FirebaseAuth error: ${e.message}");
+      }
+    } catch (e) {
+      throw Exception("Error in FirebaseUserService.deleteAccount: $e");
+    }
+  }
+
+
+
+
 
   String _mapFirebaseError(FirebaseAuthException e) {
     switch (e.code) {

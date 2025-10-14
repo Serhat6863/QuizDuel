@@ -106,4 +106,32 @@ class UserRepositoryImpl implements UserRepository {
       throw Exception("Error in UserRepositoryImpl.updateScore: $e");
     }
   }
+
+  @override
+  Future<bool> checkEmailVerified() async{
+    try{
+      final isVerified = await firebaseUserService.checkEmailVerified();
+      return isVerified;
+    }catch(e){
+      throw Exception("Error in UserRepositoryImpl.checkEmailVerified: $e");
+    }
+  }
+
+  @override
+  Future<void> resentEmailVerification() async{
+    try{
+      await firebaseUserService.resentEmailVerification();
+    }catch(e){
+      throw Exception("Error in UserRepositoryImpl.resentEmailVerification: $e");
+    }
+  }
+
+  @override
+  Future<void> deleteAccount() async{
+    try{
+      await firebaseUserService.deleteAccount();
+    }catch(e){
+      throw Exception("Error in UserRepositoryImpl.deleteAccount: $e");
+    }
+  }
 }

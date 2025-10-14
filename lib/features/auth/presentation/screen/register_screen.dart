@@ -5,9 +5,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:quizduel/features/auth/presentation/bloc/register_event.dart';
 import 'package:quizduel/features/auth/presentation/screen/login_screen.dart';
+import 'package:quizduel/features/auth/presentation/screen/verification_email_screen.dart';
 import '../bloc/register_bloc.dart';
 import '../bloc/register_state.dart';
 import '../widget/custom_text_field.dart';
+
+
+
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -20,6 +24,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   final TextEditingController _usernameController = TextEditingController();
+  final TextEditingController _confirmationController = TextEditingController();
+
+  bool _obscurePassword = true;
+  bool _obscureConfirmation = true;
+
   final formKey = GlobalKey<FormState>();
 
   void _navigateWithAnimation(BuildContext context, Widget page) {
@@ -49,7 +58,15 @@ class _RegisterScreenState extends State<RegisterScreen> {
     _emailController.dispose();
     _passwordController.dispose();
     _usernameController.dispose();
+    _confirmationController.dispose();
     super.dispose();
+  }
+
+
+  void _togglePasswordVisibility() {
+    setState(() {
+      // _obscureText = !_obscureText;
+    });
   }
 
   @override
@@ -71,7 +88,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
           ScaffoldMessenger.of(context)
           ..hideCurrentSnackBar()
           ..showSnackBar(snackBar);
-          _navigateWithAnimation(context, const LoginScreen());
+          _navigateWithAnimation(context, const VerificationEmailScreen());
         }
       },
       builder: (context, state) {
@@ -79,6 +96,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
           backgroundColor: const Color(0xFFF5E6C4),
           body: Column(
             children: [
+
+
+
               // BODY
               Expanded(
                 child: Center(
@@ -87,6 +107,18 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
+
+                        Image.asset(
+                          'assets/icon/icon.png',
+                          height: 100,
+                          errorBuilder: (context, error, stackTrace) {
+                            return const Icon(
+                              Icons.error,
+                              size: 100,
+                              color: Colors.red,
+                            );
+                          },
+                        ),
 
                         const Text(
                           "Create Account",
@@ -154,7 +186,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                 CustomTextField(
                                   controller: _emailController,
                                   hintText: "Enter your email",
-                                  iconData: Icons.email,
+                                  iconData: CupertinoIcons.mail,
                                   obsureText: false,
                                   validator: (value) {
                                     if (value == null || value.isEmpty) {
@@ -181,7 +213,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                 CustomTextField(
                                   controller: _usernameController,
                                   hintText: "Enter your username",
-                                  iconData: Icons.person,
+                                  iconData: CupertinoIcons.person,
                                   obsureText: false,
                                   validator: (value) {
                                     if (value == null || value.isEmpty) {
@@ -206,14 +238,50 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                 CustomTextField(
                                   controller: _passwordController,
                                   hintText: "Enter your password",
-                                  iconData: Icons.lock,
-                                  obsureText: true,
+                                  iconData: Icons.lock_outline,
+                                  onTap: (){
+                                    setState(() {
+                                      _obscurePassword = !_obscurePassword;
+                                    });
+                                  },
+                                  obsureText: _obscurePassword,
                                   validator: (value) {
                                     if (value == null || value.isEmpty) {
                                       return "Please enter your password";
                                     }
                                     if (value.length < 6) {
                                       return "At least 6 characters";
+                                    }
+                                    return null;
+                                  },
+                                ),
+                                const SizedBox(height: 20),
+
+                                const Text(
+                                  "Confirm Password",
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.w600,
+                                    color: Colors.black87,
+                                  ),
+                                ),
+                                const SizedBox(height: 6),
+
+                                CustomTextField(
+                                  controller: _confirmationController,
+                                  hintText: "Confirm your password",
+                                  iconData: Icons.lock_outline,
+                                  onTap: (){
+                                    setState(() {
+                                      _obscureConfirmation = !_obscureConfirmation;
+                                    });
+                                  },
+                                  obsureText: _obscureConfirmation,
+                                  validator: (value) {
+                                    if (value == null || value.isEmpty) {
+                                      return "Please confirm your password";
+                                    }
+                                    if (value != _passwordController.text) {
+                                      return "Passwords do not match";
                                     }
                                     return null;
                                   },

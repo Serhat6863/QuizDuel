@@ -2,7 +2,13 @@ import 'package:flutter/material.dart';
 
 class CustomTextField extends StatelessWidget {
   const CustomTextField({
-    super.key, required this.controller, required this.hintText, required this.iconData, this.validator, required this.obsureText,
+    super.key,
+    required this.controller,
+    required this.hintText,
+    required this.iconData,
+    this.validator,
+    required this.obsureText,
+    this.onTap,
   });
 
   final TextEditingController controller;
@@ -10,24 +16,35 @@ class CustomTextField extends StatelessWidget {
   final IconData iconData;
   final String? Function(String?)? validator;
   final bool obsureText;
-
+  final void Function()? onTap;
 
   @override
   Widget build(BuildContext context) {
     return TextFormField(
       obscureText: obsureText,
-      style: TextStyle(
-        color: Colors.white
-      ),
-      controller : controller,
+      style: const TextStyle(color: Colors.white),
+      controller: controller,
+      validator: validator,
       decoration: InputDecoration(
+        prefixIcon: Icon(
+          iconData,
+          color: Colors.white,
+        ),
+        suffixIcon: onTap != null
+            ? GestureDetector(
+          onTap: onTap,
+          child: Icon(
+            obsureText ? Icons.visibility_off : Icons.visibility,
+            color: Colors.white,
+          ),
+        )
+            : null,
         hintText: hintText,
         hintStyle: const TextStyle(
           color: Colors.white,
         ),
         filled: true,
         fillColor: Colors.black87,
-
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10),
           borderSide: BorderSide.none,
@@ -42,20 +59,16 @@ class CustomTextField extends StatelessWidget {
         ),
         errorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10),
-          borderSide: BorderSide(
+          borderSide: const BorderSide(
             color: Colors.red,
             width: 2,
           ),
         ),
-
         contentPadding: const EdgeInsets.symmetric(
           vertical: 20,
           horizontal: 20,
         ),
-
-
       ),
-      validator: validator,
     );
   }
 }

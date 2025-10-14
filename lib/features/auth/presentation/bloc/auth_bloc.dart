@@ -11,6 +11,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     on<AppStarted>(_onAppStarted);
     on<LoggedIn>(_onLoggedIn);
     on<LoggedOut>(_onLoggedOut);
+    on<DeleteAccountEvent>(_onDeleteAccount);
 
     on<RefreshUserEvent>((event, emit) async {
       try {
@@ -62,6 +63,17 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     try {
       await userRepository.signOut();
       emit(AuthState.unauthenticated());
+    } catch (e) {
+      emit(AuthState.failure(e.toString()));
+    }
+  }
+
+
+  Future<void> _onDeleteAccount(DeleteAccountEvent event, Emitter<AuthState> emit) async {
+    emit(AuthState.loading());
+    try {
+      await userRepository.deleteAccount();
+      emit(AuthState.deleted());
     } catch (e) {
       emit(AuthState.failure(e.toString()));
     }

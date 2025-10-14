@@ -82,11 +82,17 @@ class _LoginScreenState extends State<LoginScreen> {
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
 
-
                         Image.asset(
                           "assets/icon/icon.png",
-                          height: 120,
-                          width: 120,
+                          height: 100,
+                          width: 100,
+                          errorBuilder: (context, error, stackTrace) {
+                            return const Icon(
+                              Icons.quiz,
+                              size: 100,
+                              color: Colors.deepPurple,
+                            );
+                          },
                         ),
 
                         const Text(
@@ -155,7 +161,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                 CustomTextField(
                                   controller: _emailController,
                                   hintText: "Enter your email",
-                                  iconData: Icons.email,
+                                  iconData: CupertinoIcons.mail,
                                   obsureText: false,
                                   validator: (value) {
                                     if (value == null || value.isEmpty) {
