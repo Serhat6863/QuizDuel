@@ -10,6 +10,7 @@ import 'package:quizduel/features/auth/presentation/widget/custom_text_field.dar
 import 'package:quizduel/features/room/presentation/screen/room_home_screen.dart';
 import '../bloc/login_bloc.dart';
 import '../bloc/login_state.dart';
+import 'forget_password_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -22,6 +23,8 @@ class _LoginScreenState extends State<LoginScreen> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   final formKey = GlobalKey<FormState>();
+
+  bool _obscureText = true;
 
   void _navigateWithAnimation(BuildContext context, Widget page) {
     Navigator.of(context).pushReplacement(
@@ -161,6 +164,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                 CustomTextField(
                                   controller: _emailController,
                                   hintText: "Enter your email",
+                                  keyboardType: TextInputType.emailAddress,
                                   iconData: CupertinoIcons.mail,
                                   obsureText: false,
                                   validator: (value) {
@@ -188,8 +192,14 @@ class _LoginScreenState extends State<LoginScreen> {
                                 CustomTextField(
                                   controller: _passwordController,
                                   hintText: "Enter your password",
-                                  iconData: Icons.lock,
-                                  obsureText: true,
+                                  keyboardType: TextInputType.visiblePassword,
+                                  iconData: CupertinoIcons.lock,
+                                  onTap: () {
+                                    setState(() {
+                                      _obscureText = !_obscureText;
+                                    });
+                                  },
+                                  obsureText: _obscureText,
                                   validator: (value) {
                                     if (value == null || value.isEmpty) {
                                       return "Please enter your password";
@@ -200,7 +210,32 @@ class _LoginScreenState extends State<LoginScreen> {
                                     return null;
                                   },
                                 ),
-                                const SizedBox(height: 30),
+
+                                const SizedBox(height: 10),
+
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.end,
+                                  children: [
+                                    GestureDetector(
+                                      onTap: (){
+                                        Navigator.of(context).push(
+                                          MaterialPageRoute(
+                                            builder: (_) => const ForgetPasswordScreen(),
+                                          ),
+                                        );
+                                      },
+                                      child: Text(
+                                        "Forgot Password?",
+                                        style: TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          color: Colors.deepPurple.shade300,
+                                          fontSize: 16,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 10),
 
                                 // 🚀 Login button
                                 SizedBox(
@@ -265,7 +300,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           children: [
                             const Text(
                               "Don't have an account? ",
-                              style: TextStyle(color: Colors.black87),
+                              style: TextStyle(color: Colors.black87 , fontSize: 18),
                             ),
                             GestureDetector(
                               onTap: () {
@@ -277,7 +312,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                 style: TextStyle(
                                   fontWeight: FontWeight.bold,
                                   color: Colors.deepPurple,
-                                  decoration: TextDecoration.underline,
+                                  fontSize: 18,
                                 ),
                               ),
                             ),

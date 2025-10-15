@@ -11,4 +11,5 @@ abstract class UserRepository {
   Future<bool> checkEmailVerified();
   Future<void> resentEmailVerification();
   Future<void> deleteAccount();
+  Future<void> resetPassword(String email);
 }

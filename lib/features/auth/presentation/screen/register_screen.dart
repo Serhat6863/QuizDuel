@@ -186,6 +186,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                 CustomTextField(
                                   controller: _emailController,
                                   hintText: "Enter your email",
+                                  keyboardType: TextInputType.emailAddress,
                                   iconData: CupertinoIcons.mail,
                                   obsureText: false,
                                   validator: (value) {
@@ -213,6 +214,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                 CustomTextField(
                                   controller: _usernameController,
                                   hintText: "Enter your username",
+                                  keyboardType: TextInputType.text,
                                   iconData: CupertinoIcons.person,
                                   obsureText: false,
                                   validator: (value) {
@@ -238,7 +240,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                 CustomTextField(
                                   controller: _passwordController,
                                   hintText: "Enter your password",
-                                  iconData: Icons.lock_outline,
+                                  keyboardType: TextInputType.visiblePassword,
+                                  iconData: CupertinoIcons.lock,
                                   onTap: (){
                                     setState(() {
                                       _obscurePassword = !_obscurePassword;
@@ -269,7 +272,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                 CustomTextField(
                                   controller: _confirmationController,
                                   hintText: "Confirm your password",
-                                  iconData: Icons.lock_outline,
+                                  keyboardType: TextInputType.visiblePassword,
+                                  iconData: CupertinoIcons.lock,
                                   onTap: (){
                                     setState(() {
                                       _obscureConfirmation = !_obscureConfirmation;

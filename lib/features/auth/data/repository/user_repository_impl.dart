@@ -134,4 +134,13 @@ class UserRepositoryImpl implements UserRepository {
       throw Exception("Error in UserRepositoryImpl.deleteAccount: $e");
     }
   }
+
+  @override
+  Future<void> resetPassword(String email) async{
+    try{
+      await firebaseUserService.resetPassword(email);
+    }catch(e){
+      throw Exception("Error in UserRepositoryImpl.resetPassword: $e");
+    }
+  }
 }

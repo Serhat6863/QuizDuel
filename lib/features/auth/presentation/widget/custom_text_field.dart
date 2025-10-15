@@ -8,7 +8,7 @@ class CustomTextField extends StatelessWidget {
     required this.iconData,
     this.validator,
     required this.obsureText,
-    this.onTap,
+    this.onTap, required this.keyboardType,
   });
 
   final TextEditingController controller;
@@ -17,6 +17,7 @@ class CustomTextField extends StatelessWidget {
   final String? Function(String?)? validator;
   final bool obsureText;
   final void Function()? onTap;
+  final TextInputType keyboardType;
 
   @override
   Widget build(BuildContext context) {
@@ -25,7 +26,15 @@ class CustomTextField extends StatelessWidget {
       style: const TextStyle(color: Colors.white),
       controller: controller,
       validator: validator,
+      keyboardType: keyboardType,
+
       decoration: InputDecoration(
+        errorStyle: const TextStyle(
+          color: Colors.red,
+          fontWeight: FontWeight.bold,
+          fontSize: 14,
+          height: 1.5,
+        ),
         prefixIcon: Icon(
           iconData,
           color: Colors.white,

@@ -185,6 +185,15 @@ class FirebaseUserService {
   }
 
 
+  Future<void> resetPassword(String email) async {
+    try{
+      await auth.sendPasswordResetEmail(email: email);
+    }catch(e){
+      throw Exception("Error in FirebaseUserService.resetPassword: $e");
+    }
+  }
+
+
 
 
 

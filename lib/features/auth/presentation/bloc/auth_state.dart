@@ -8,6 +8,7 @@ enum AuthStatus {
   loading,
   failure,
   deleted,
+  passwordResetEmailSent,
 }
 
 extension AuthStatusX on AuthStatus {
@@ -17,6 +18,7 @@ extension AuthStatusX on AuthStatus {
   bool get isLoading => this == AuthStatus.loading;
   bool get isFailure => this == AuthStatus.failure;
   bool get isDeleted => this == AuthStatus.deleted;
+  bool get isPasswordResetEmailSent => this == AuthStatus.passwordResetEmailSent;
 }
 
 class AuthState extends Equatable {
@@ -42,6 +44,9 @@ class AuthState extends Equatable {
   factory AuthState.loading() => const AuthState(status: AuthStatus.loading);
 
   factory AuthState.deleted() => const AuthState(status: AuthStatus.deleted);
+
+  factory AuthState.passwordResetEmailSent() =>
+      const AuthState(status: AuthStatus.passwordResetEmailSent);
 
   factory AuthState.failure(String message) =>
       AuthState(status: AuthStatus.failure, failure: message);
