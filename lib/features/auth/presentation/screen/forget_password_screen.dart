@@ -1,17 +1,18 @@
 import 'dart:async';
-import 'dart:io';
 import 'dart:ui';
-
 import 'package:awesome_snackbar_content/awesome_snackbar_content.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:quizduel/core/theme/app_colors.dart';
+import 'package:quizduel/core/theme/app_text_styles.dart';
+import 'package:quizduel/core/theme/app_button_styles.dart';
 import 'package:quizduel/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:quizduel/features/auth/presentation/bloc/auth_state.dart';
+import 'package:quizduel/features/auth/presentation/bloc/auth_event.dart';
+import 'package:quizduel/features/auth/presentation/screen/login_screen.dart';
 import 'package:quizduel/features/auth/presentation/widget/custom_text_field.dart';
 
-import '../bloc/auth_event.dart';
-import 'login_screen.dart';
 class ForgetPasswordScreen extends StatefulWidget {
   const ForgetPasswordScreen({super.key});
 
@@ -20,13 +21,11 @@ class ForgetPasswordScreen extends StatefulWidget {
 }
 
 class _ForgetPasswordScreenState extends State<ForgetPasswordScreen> {
-
   final TextEditingController _emailController = TextEditingController();
   final formKey = GlobalKey<FormState>();
   int _remainingSeconds = 30;
   bool _isSending = false;
   Timer? _timer;
-
 
   void _startTimer() {
     setState(() {
@@ -34,11 +33,12 @@ class _ForgetPasswordScreenState extends State<ForgetPasswordScreen> {
       _remainingSeconds = 30;
     });
 
-    _timer?.cancel(); // évite les doublons
+    _timer?.cancel();
 
     _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
       if (_remainingSeconds == 0) {
         setState(() {
+          _isSending = false;
           timer.cancel();
         });
       } else {
@@ -48,7 +48,6 @@ class _ForgetPasswordScreenState extends State<ForgetPasswordScreen> {
       }
     });
   }
-
 
   void _showSnack(
       BuildContext context, {
@@ -71,11 +70,8 @@ class _ForgetPasswordScreenState extends State<ForgetPasswordScreen> {
       ..showSnackBar(snackBar);
   }
 
-
-
   @override
   void dispose() {
-    // TODO: implement dispose
     _emailController.dispose();
     _timer?.cancel();
     super.dispose();
@@ -84,194 +80,169 @@ class _ForgetPasswordScreenState extends State<ForgetPasswordScreen> {
   @override
   Widget build(BuildContext context) {
     return BlocListener<AuthBloc, AuthState>(
-      listener: (context, state){
-        if(state.status.isFailure){
+      listener: (context, state) {
+        if (state.status.isFailure) {
           _showSnack(
             context,
-            title: "Erreur",
-            message: state.failure ?? "Une erreur est survenue",
+            title: "Error",
+            message: state.failure ?? "An error occurred",
             type: ContentType.failure,
           );
-        } else if(state.status.isPasswordResetEmailSent){
+        } else if (state.status.isPasswordResetEmailSent) {
           _showSnack(
             context,
-            title: "Succès",
-            message: "Email de réinitialisation envoyé ! Vérifiez votre boîte de réception.",
+            title: "Success",
+            message:
+            "Reset link sent! Please check your inbox to reset your password.",
             type: ContentType.success,
           );
         }
       },
       child: Scaffold(
-        backgroundColor: const Color(0xFFF5E6C4),
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         body: SafeArea(
           child: SingleChildScrollView(
-            child: Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-
-                  Padding(
-                    padding: const EdgeInsets.all(12.0),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.start,
-                      children: [
-                        ClipRRect(
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 40),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                // 🔙 Bouton retour
+                Align(
+                  alignment: Alignment.topLeft,
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(14),
+                    child: BackdropFilter(
+                      filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: AppColors.white.withOpacity(0.15),
+                          border: Border.all(
+                            color: AppColors.white.withOpacity(0.25),
+                          ),
                           borderRadius: BorderRadius.circular(14),
-                          child: BackdropFilter(
-                            filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-                            child: Container(
-                              decoration: BoxDecoration(
-                                color: Colors.white.withOpacity(0.15),
-                                border: Border.all(
-                                  color: Colors.white.withOpacity(0.25),
-                                ),
-                                borderRadius: BorderRadius.circular(14),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: Colors.black.withOpacity(0.15),
-                                    blurRadius: 6,
-                                    offset: const Offset(0, 3),
-                                  ),
-                                ],
-                              ),
-                              child: IconButton(
-                                onPressed: (){
-                                  Navigator.pushReplacement(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (context) => const LoginScreen(),
-                                    ),
-                                  );
-                                },
-                                icon: const Icon(
-                                  CupertinoIcons.back,
-                                  color: Colors.deepPurple,
-                                  size: 30,
-                                ),
-                              ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: AppColors.shadowStrong,
+                              blurRadius: 6,
+                              offset: const Offset(0, 3),
                             ),
+                          ],
+                        ),
+                        child: IconButton(
+                          onPressed: () {
+                            Navigator.pushReplacement(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const LoginScreen(),
+                              ),
+                            );
+                          },
+                          icon: const Icon(
+                            CupertinoIcons.back,
+                            color: AppColors.primary,
+                            size: 30,
                           ),
                         ),
-                      ],
+                      ),
                     ),
                   ),
+                ),
 
+                const SizedBox(height: 50),
 
+                // 🔒 Icône principale
+                const Icon(
+                  CupertinoIcons.lock_open,
+                  color: AppColors.primary,
+                  size: 100,
+                ),
+                const SizedBox(height: 20),
 
-                  const SizedBox(height: 50),
-                  const Icon(
-                   CupertinoIcons.lock_open,
-                    color: Colors.black87,
-                    size: 100,
-                  ),
+                const Text("Password Reset", style: AppTextStyles.pageTitle),
+                const SizedBox(height: 20),
 
-                  const SizedBox(height: 20),
+                Text(
+                  "Please enter your email address to receive a password reset link.",
+                  textAlign: TextAlign.center,
+                  style: AppTextStyles.subtitle,
+                ),
 
+                const SizedBox(height: 30),
 
-                  const Text(
-                    'Password Reset 🔒',
-                    style: TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.deepPurple,
-                    ),
-                  ),
+                // 📧 Champ email
+                Form(
+                  key: formKey,
+                  child: Column(
+                    children: [
+                      CustomTextField(
+                        controller: _emailController,
+                        hintText: 'Enter your email',
+                        iconData: CupertinoIcons.mail,
+                        obsureText: false,
+                        keyboardType: TextInputType.emailAddress,
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return "Please enter your email";
+                          }
+                          if (!RegExp(r'^[^@]+@[^@]+\.[^@]+').hasMatch(value)) {
+                            return 'Please enter a valid email address';
+                          }
+                          return null;
+                        },
+                      ),
+                      const SizedBox(height: 20),
 
-                  const SizedBox(height: 20),
-
-
-                  Text(
-                    "Please enter your email address to receive a password reset link.",
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 16,
-                      color: Colors.grey[800],
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-
-                  const SizedBox(height: 30),
-
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 30.0),
-                    child: Form(
-                      key: formKey,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          CustomTextField(
-                            controller: _emailController,
-                            hintText: 'Email',
-                            iconData: Icons.email,
-                            obsureText: false,
-                            keyboardType: TextInputType.emailAddress,
-                            validator: (value) {
-                              if (value == null || value.isEmpty) {
-                                return "Please enter your email";
-                              }
-                              if (!RegExp(r'^[^@]+@[^@]+\.[^@]+').hasMatch(value)) {
-                                return 'Please enter a valid email address';
-                              }
-                              return null;
-                            },
-                          ),
-
-                          const SizedBox(height: 20),
-
-
-                          SizedBox(
-                            width: double.infinity,
-                            child: ElevatedButton(
-                              onPressed: _isSending
+                      // 🚀 Bouton envoyer
+                      SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton(
+                          onPressed: _isSending
                               ? null
-                              : (){
-                                if(formKey.currentState!.validate()){
-                                  context.read<AuthBloc>().add(
-                                    SendPasswordResetEmailEvent(
-                                      _emailController.text.trim(),
-                                    ),
-                                  );
-                                  _startTimer();
-                                }
-                              },
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor:
-                                Colors.deepPurple.shade500,
-                                padding: const EdgeInsets.symmetric(
-                                    vertical: 15),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius:
-                                  BorderRadius.circular(12),
+                              : () {
+                            if (formKey.currentState!.validate()) {
+                              context.read<AuthBloc>().add(
+                                SendPasswordResetEmailEvent(
+                                  _emailController.text.trim(),
                                 ),
-                                elevation: 3,
-                              ),
-                              child: Text(
-                                _isSending ?
-                                "Please wait ($_remainingSeconds s)"
-                                    : "Send Reset Link",
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ),
+                              );
+                              _startTimer();
+                            }
+                          },
+                          style: AppButtonStyles.primary,
+                          child: Text(
+                            _isSending
+                                ? "Please wait ($_remainingSeconds s)"
+                                : "Send Reset Link",
+                            style: AppTextStyles.button,
                           ),
-
-                        ],
-                      )
-                    ),
+                        ),
+                      ),
+                    ],
                   ),
+                ),
 
-                ],
-              ),
+                const SizedBox(height: 30),
+
+                // 🔗 Retour au login
+                GestureDetector(
+                  onTap: () {
+                    Navigator.pushReplacement(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const LoginScreen(),
+                      ),
+                    );
+                  },
+                  child: Text(
+                    "Back to Login",
+                    style: AppTextStyles.link,
+                  ),
+                ),
+              ],
             ),
           ),
         ),
       ),
     );
   }
-
-
-
 }

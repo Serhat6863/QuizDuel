@@ -3,15 +3,15 @@ import 'package:awesome_snackbar_content/awesome_snackbar_content.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:quizduel/core/theme/app_colors.dart';
+import 'package:quizduel/core/theme/app_text_styles.dart';
+import 'package:quizduel/core/theme/app_button_styles.dart';
 import 'package:quizduel/features/auth/presentation/bloc/register_event.dart';
 import 'package:quizduel/features/auth/presentation/screen/login_screen.dart';
 import 'package:quizduel/features/auth/presentation/screen/verification_email_screen.dart';
 import '../bloc/register_bloc.dart';
 import '../bloc/register_state.dart';
 import '../widget/custom_text_field.dart';
-
-
-
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -28,7 +28,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   bool _obscurePassword = true;
   bool _obscureConfirmation = true;
-
   final formKey = GlobalKey<FormState>();
 
   void _navigateWithAnimation(BuildContext context, Widget page) {
@@ -62,19 +61,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
     super.dispose();
   }
 
-
-  void _togglePasswordVisibility() {
-    setState(() {
-      // _obscureText = !_obscureText;
-    });
-  }
-
   @override
   Widget build(BuildContext context) {
     return BlocConsumer<RegisterBloc, RegisterState>(
       listener: (context, state) {
         if (state.status.isSuccess) {
-          //awesome snack bar
           final snackBar = SnackBar(
             elevation: 0,
             behavior: SnackBarBehavior.floating,
@@ -86,302 +77,234 @@ class _RegisterScreenState extends State<RegisterScreen> {
             ),
           );
           ScaffoldMessenger.of(context)
-          ..hideCurrentSnackBar()
-          ..showSnackBar(snackBar);
+            ..hideCurrentSnackBar()
+            ..showSnackBar(snackBar);
+
           _navigateWithAnimation(context, const VerificationEmailScreen());
         }
       },
       builder: (context, state) {
         return Scaffold(
-          backgroundColor: const Color(0xFFF5E6C4),
-          body: Column(
-            children: [
+          backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+          body: Center(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(horizontal: 24),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  // 🔹 Logo
+                  Image.asset(
+                    'assets/icon/icon.png',
+                    height: 100,
+                    errorBuilder: (context, error, stackTrace) {
+                      return const Icon(
+                        Icons.quiz,
+                        size: 100,
+                        color: AppColors.primary,
+                      );
+                    },
+                  ),
+                  const SizedBox(height: 10),
+                  const Text("Create Account", style: AppTextStyles.pageTitle),
+                  const SizedBox(height: 30),
 
-
-
-              // BODY
-              Expanded(
-                child: Center(
-                  child: SingleChildScrollView(
-                    padding: const EdgeInsets.symmetric(horizontal: 24),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-
-                        Image.asset(
-                          'assets/icon/icon.png',
-                          height: 100,
-                          errorBuilder: (context, error, stackTrace) {
-                            return const Icon(
-                              Icons.error,
-                              size: 100,
-                              color: Colors.red,
-                            );
-                          },
-                        ),
-
-                        const Text(
-                          "Create Account",
-                          style: TextStyle(
-                            fontSize: 26,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.deepPurple,
-                          ),
-                        ),
-                        const SizedBox(height: 30),
-
-                        // ✨ Card blanche du formulaire
-                        Container(
-                          width: double.infinity,
-                          padding: const EdgeInsets.all(24),
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(20),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withOpacity(0.1),
-                                blurRadius: 10,
-                                offset: const Offset(0, 4),
-                              ),
-                            ],
-                          ),
-                          child: Form(
-                            key: formKey,
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                if (state.status.isFailure)
-                                  Container(
-                                    padding: const EdgeInsets.all(8),
-                                    decoration: BoxDecoration(
-                                      color: Colors.red.withOpacity(0.8),
-                                      borderRadius: BorderRadius.circular(8),
-                                    ),
-                                    child: Row(
-                                      children: const [
-                                        Icon(Icons.error, color: Colors.white),
-                                        SizedBox(width: 8),
-                                        Expanded(
-                                          child: Text(
-                                            "This email already exists",
-                                            style: TextStyle(
-                                              color: Colors.white,
-                                              fontWeight: FontWeight.bold,
-                                            ),
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                const SizedBox(height: 20),
-
-                                const Text(
-                                  "Email",
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.w600,
-                                    color: Colors.black87,
-                                  ),
-                                ),
-                                const SizedBox(height: 6),
-                                CustomTextField(
-                                  controller: _emailController,
-                                  hintText: "Enter your email",
-                                  keyboardType: TextInputType.emailAddress,
-                                  iconData: CupertinoIcons.mail,
-                                  obsureText: false,
-                                  validator: (value) {
-                                    if (value == null || value.isEmpty) {
-                                      return "Please enter your email";
-                                    }
-                                    if (!RegExp(
-                                      r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$',
-                                    ).hasMatch(value)) {
-                                      return "Invalid email";
-                                    }
-                                    return null;
-                                  },
-                                ),
-                                const SizedBox(height: 20),
-
-                                const Text(
-                                  "Username",
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.w600,
-                                    color: Colors.black87,
-                                  ),
-                                ),
-                                const SizedBox(height: 6),
-                                CustomTextField(
-                                  controller: _usernameController,
-                                  hintText: "Enter your username",
-                                  keyboardType: TextInputType.text,
-                                  iconData: CupertinoIcons.person,
-                                  obsureText: false,
-                                  validator: (value) {
-                                    if (value == null || value.isEmpty) {
-                                      return "Please enter your username";
-                                    }
-                                    if (value.length < 3) {
-                                      return "At least 3 characters";
-                                    }
-                                    return null;
-                                  },
-                                ),
-                                const SizedBox(height: 20),
-
-                                const Text(
-                                  "Password",
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.w600,
-                                    color: Colors.black87,
-                                  ),
-                                ),
-                                const SizedBox(height: 6),
-                                CustomTextField(
-                                  controller: _passwordController,
-                                  hintText: "Enter your password",
-                                  keyboardType: TextInputType.visiblePassword,
-                                  iconData: CupertinoIcons.lock,
-                                  onTap: (){
-                                    setState(() {
-                                      _obscurePassword = !_obscurePassword;
-                                    });
-                                  },
-                                  obsureText: _obscurePassword,
-                                  validator: (value) {
-                                    if (value == null || value.isEmpty) {
-                                      return "Please enter your password";
-                                    }
-                                    if (value.length < 6) {
-                                      return "At least 6 characters";
-                                    }
-                                    return null;
-                                  },
-                                ),
-                                const SizedBox(height: 20),
-
-                                const Text(
-                                  "Confirm Password",
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.w600,
-                                    color: Colors.black87,
-                                  ),
-                                ),
-                                const SizedBox(height: 6),
-
-                                CustomTextField(
-                                  controller: _confirmationController,
-                                  hintText: "Confirm your password",
-                                  keyboardType: TextInputType.visiblePassword,
-                                  iconData: CupertinoIcons.lock,
-                                  onTap: (){
-                                    setState(() {
-                                      _obscureConfirmation = !_obscureConfirmation;
-                                    });
-                                  },
-                                  obsureText: _obscureConfirmation,
-                                  validator: (value) {
-                                    if (value == null || value.isEmpty) {
-                                      return "Please confirm your password";
-                                    }
-                                    if (value != _passwordController.text) {
-                                      return "Passwords do not match";
-                                    }
-                                    return null;
-                                  },
-                                ),
-                                const SizedBox(height: 30),
-
-                                // 🚀 Register button
-                                SizedBox(
-                                  width: double.infinity,
-                                  child: ElevatedButton(
-                                    onPressed: state.status.isLoading
-                                        ? null
-                                        : () {
-                                      if (formKey.currentState!
-                                          .validate()) {
-                                        context
-                                            .read<RegisterBloc>()
-                                            .add(RegisterButtonPressed(
-                                          email:
-                                          _emailController.text,
-                                          password:
-                                          _passwordController
-                                              .text,
-                                          username:
-                                          _usernameController
-                                              .text,
-                                        ));
-                                      }
-                                    },
-                                    style: ElevatedButton.styleFrom(
-                                      backgroundColor:
-                                      Colors.deepPurple.shade500,
-                                      padding: const EdgeInsets.symmetric(
-                                          vertical: 15),
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius:
-                                        BorderRadius.circular(12),
-                                      ),
-                                      elevation: 3,
-                                    ),
-                                    child: state.status.isLoading
-                                        ? const SizedBox(
-                                      height: 20,
-                                      width: 20,
-                                      child: CircularProgressIndicator(
-                                        color: Colors.white,
-                                        strokeWidth: 2,
-                                      ),
-                                    )
-                                        : const Text(
-                                      "Register",
-                                      style: TextStyle(
-                                        fontSize: 18,
-                                        fontWeight: FontWeight.bold,
-                                        color: Colors.white,
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-
-                        const SizedBox(height: 25),
-
-                        // 🔗 Login link
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            const Text(
-                              "Already have an account? ",
-                              style: TextStyle(color: Colors.black87),
-                            ),
-                            GestureDetector(
-                              onTap: () {
-                                _navigateWithAnimation(
-                                    context, const LoginScreen());
-                              },
-                              child: const Text(
-                                "Login",
-                                style: TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.deepPurple,
-                                  decoration: TextDecoration.underline,
-                                ),
-                              ),
-                            ),
-                          ],
+                  // ✨ Form card
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(24),
+                    decoration: BoxDecoration(
+                      color: AppColors.white,
+                      borderRadius: BorderRadius.circular(20),
+                      boxShadow: [
+                        BoxShadow(
+                          color: AppColors.shadowStrong,
+                          blurRadius: 10,
+                          offset: const Offset(0, 4),
                         ),
                       ],
                     ),
+                    child: Form(
+                      key: formKey,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          if (state.status.isFailure)
+                            Container(
+                              padding: const EdgeInsets.all(8),
+                              decoration: BoxDecoration(
+                                color: AppColors.red.withOpacity(0.9),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Row(
+                                children: const [
+                                  Icon(Icons.error, color: AppColors.white),
+                                  SizedBox(width: 8),
+                                  Expanded(
+                                    child: Text(
+                                      "This email already exists",
+                                      style: AppTextStyles.buttonSmall,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          const SizedBox(height: 20),
+
+                          const Text("Email", style: AppTextStyles.inputLabel),
+                          const SizedBox(height: 6),
+                          CustomTextField(
+                            controller: _emailController,
+                            hintText: "Enter your email",
+                            keyboardType: TextInputType.emailAddress,
+                            iconData: CupertinoIcons.mail,
+                            obsureText: false,
+                            validator: (value) {
+                              if (value == null || value.isEmpty) {
+                                return "Please enter your email";
+                              }
+                              if (!RegExp(
+                                r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$',
+                              ).hasMatch(value)) {
+                                return "Invalid email";
+                              }
+                              return null;
+                            },
+                          ),
+                          const SizedBox(height: 20),
+
+                          const Text("Username", style: AppTextStyles.inputLabel),
+                          const SizedBox(height: 6),
+                          CustomTextField(
+                            controller: _usernameController,
+                            hintText: "Enter your username",
+                            keyboardType: TextInputType.text,
+                            iconData: CupertinoIcons.person,
+                            obsureText: false,
+                            validator: (value) {
+                              if (value == null || value.isEmpty) {
+                                return "Please enter your username";
+                              }
+                              if (value.length < 3) {
+                                return "At least 3 characters";
+                              }
+                              return null;
+                            },
+                          ),
+                          const SizedBox(height: 20),
+
+                          const Text("Password", style: AppTextStyles.inputLabel),
+                          const SizedBox(height: 6),
+                          CustomTextField(
+                            controller: _passwordController,
+                            hintText: "Enter your password",
+                            keyboardType: TextInputType.visiblePassword,
+                            iconData: CupertinoIcons.lock,
+                            onTap: () {
+                              setState(() {
+                                _obscurePassword = !_obscurePassword;
+                              });
+                            },
+                            obsureText: _obscurePassword,
+                            validator: (value) {
+                              if (value == null || value.isEmpty) {
+                                return "Please enter your password";
+                              }
+                              if (value.length < 6) {
+                                return "At least 6 characters";
+                              }
+                              return null;
+                            },
+                          ),
+                          const SizedBox(height: 20),
+
+                          const Text("Confirm Password",
+                              style: AppTextStyles.inputLabel),
+                          const SizedBox(height: 6),
+                          CustomTextField(
+                            controller: _confirmationController,
+                            hintText: "Confirm your password",
+                            keyboardType: TextInputType.visiblePassword,
+                            iconData: CupertinoIcons.lock,
+                            onTap: () {
+                              setState(() {
+                                _obscureConfirmation = !_obscureConfirmation;
+                              });
+                            },
+                            obsureText: _obscureConfirmation,
+                            validator: (value) {
+                              if (value == null || value.isEmpty) {
+                                return "Please confirm your password";
+                              }
+                              if (value != _passwordController.text) {
+                                return "Passwords do not match";
+                              }
+                              return null;
+                            },
+                          ),
+                          const SizedBox(height: 30),
+
+                          // 🚀 Register button
+                          SizedBox(
+                            width: double.infinity,
+                            child: ElevatedButton(
+                              onPressed: state.status.isLoading
+                                  ? null
+                                  : () {
+                                if (formKey.currentState!.validate()) {
+                                  context.read<RegisterBloc>().add(
+                                    RegisterButtonPressed(
+                                      email: _emailController.text,
+                                      password: _passwordController.text,
+                                      username: _usernameController.text,
+                                    ),
+                                  );
+                                }
+                              },
+                              style: AppButtonStyles.primary,
+                              child: state.status.isLoading
+                                  ? const SizedBox(
+                                height: 20,
+                                width: 20,
+                                child: CircularProgressIndicator(
+                                  color: AppColors.white,
+                                  strokeWidth: 2,
+                                ),
+                              )
+                                  : const Text("Register"),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
                   ),
-                ),
+
+                  const SizedBox(height: 25),
+
+                  // 🔗 Login link
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        "Already have an account? ",
+                        style: AppTextStyles.subtitle,
+                      ),
+                      GestureDetector(
+                        onTap: () {
+                          _navigateWithAnimation(
+                            context,
+                            const LoginScreen(),
+                          );
+                        },
+                        child: Text(
+                          "Login",
+                          style: AppTextStyles.link,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
               ),
-            ],
+            ),
           ),
         );
       },

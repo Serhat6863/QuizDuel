@@ -1,6 +1,9 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:quizduel/core/theme/app_colors.dart';
+import 'package:quizduel/core/theme/app_text_styles.dart';
+import 'package:quizduel/core/theme/app_button_styles.dart';
 import 'package:quizduel/features/room/presentation/bloc/leader_bloc.dart';
 import 'package:quizduel/features/room/presentation/bloc/leader_event.dart';
 import 'package:quizduel/features/room/presentation/bloc/leader_state.dart';
@@ -24,27 +27,20 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF5E6C4),
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: Column(
         children: [
-          // Header
+          // 🌟 HEADER
           Container(
             decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [
-                  Colors.blue.shade600,
-                  Colors.blue.shade400,
-                ],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
+              gradient: AppColors.blueGradient,
               borderRadius: const BorderRadius.only(
                 bottomLeft: Radius.circular(30),
                 bottomRight: Radius.circular(30),
               ),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.blue.shade200.withOpacity(0.4),
+                  color: AppColors.shadowStrong,
                   blurRadius: 10,
                   offset: const Offset(0, 4),
                 ),
@@ -54,20 +50,19 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
             child: Row(
               children: [
                 const SizedBox(width: 20),
+                // 🔙 Bouton retour
                 GestureDetector(
                   onTap: () => Navigator.pop(context),
                   child: Container(
                     decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.2),
+                      color: AppColors.white.withOpacity(0.2),
                       borderRadius: BorderRadius.circular(14),
-                      border: Border.all(
-                        color: Colors.white.withOpacity(0.3),
-                      ),
+                      border: Border.all(color: AppColors.white70),
                     ),
                     padding: const EdgeInsets.all(8),
                     child: const Icon(
                       CupertinoIcons.back,
-                      color: Colors.white,
+                      color: AppColors.white,
                       size: 22,
                     ),
                   ),
@@ -75,11 +70,7 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
                 const Spacer(),
                 const Text(
                   "Leaderboard",
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 22,
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: AppTextStyles.headerWhite,
                 ),
                 const Spacer(flex: 2),
               ],
@@ -88,37 +79,27 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
 
           const SizedBox(height: 10),
 
-          // Leaderboard list
+          // 🏆 CONTENU
           Expanded(
             child: BlocBuilder<LeaderBloc, LeaderState>(
               builder: (context, state) {
                 if (state.status.isLoading) {
-                  return Center(
-                    child: CircularProgressIndicator(
-                      color: Colors.blue.shade400,
-                    ),
+                  return const Center(
+                    child: CircularProgressIndicator(color: AppColors.primary),
                   );
                 } else if (state.status.isFailure) {
                   return Center(
                     child: Text(
-                      "Erreur de chargement",
-                      style: TextStyle(
-                        color: Colors.red.shade400,
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
+                      "Error loading leaderboard 😢",
+                      style: AppTextStyles.failure,
                     ),
                   );
                 } else if (state.status.isSuccess) {
                   if (state.leaders.isEmpty) {
-                    return Center(
+                    return const Center(
                       child: Text(
-                        "Leaderboard vide",
-                        style: TextStyle(
-                          color: Colors.grey.shade400,
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                        ),
+                        "Leaderboard is empty 🏁",
+                        style: AppTextStyles.subtitle,
                       ),
                     );
                   }
@@ -130,27 +111,27 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
                     itemBuilder: (context, index) {
                       final leader = state.leaders[index];
 
-                      // Couleurs pour top 3
+                      // 🥇 Couleurs podium
                       Color rankColor;
                       if (index == 0) {
-                        rankColor = Colors.amber.shade600;
+                        rankColor = AppColors.amber;
                       } else if (index == 1) {
-                        rankColor = Colors.grey.shade400;
+                        rankColor = AppColors.greyLight;
                       } else if (index == 2) {
-                        rankColor = Colors.brown.shade400;
+                        rankColor = AppColors.brownLight;
                       } else {
-                        rankColor = Colors.blueGrey.shade200;
+                        rankColor = AppColors.blueGrey;
                       }
 
                       return Container(
                         margin: const EdgeInsets.symmetric(vertical: 6),
                         decoration: BoxDecoration(
-                          color: Colors.white,
+                          color: AppColors.white,
                           borderRadius: BorderRadius.circular(16),
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.black.withOpacity(0.05),
-                              blurRadius: 5,
+                              color: AppColors.shadowSoft,
+                              blurRadius: 6,
                               offset: const Offset(0, 2),
                             ),
                           ],
@@ -161,27 +142,16 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
                             radius: 22,
                             child: Text(
                               "${index + 1}",
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontWeight: FontWeight.bold,
-                              ),
+                              style: AppTextStyles.rankNumber,
                             ),
                           ),
                           title: Text(
                             leader.username,
-                            style: const TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.black87,
-                            ),
+                            style: AppTextStyles.listTitle,
                           ),
                           trailing: Text(
                             "${leader.score ?? 0} pts",
-                            style: const TextStyle(
-                              fontSize: 16,
-                              color: Colors.black54,
-                              fontWeight: FontWeight.w500,
-                            ),
+                            style: AppTextStyles.listSubtitle,
                           ),
                         ),
                       );
@@ -189,14 +159,10 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
                   );
                 }
 
-                return Center(
+                return const Center(
                   child: Text(
-                    "Aucune donnée",
-                    style: TextStyle(
-                      color: Colors.grey.shade400,
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                    ),
+                    "No data available",
+                    style: AppTextStyles.subtitle,
                   ),
                 );
               },

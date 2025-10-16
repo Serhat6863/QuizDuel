@@ -3,6 +3,9 @@ import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:html_unescape/html_unescape.dart';
+import 'package:quizduel/core/theme/app_colors.dart';
+import 'package:quizduel/core/theme/app_text_styles.dart';
+import 'package:quizduel/core/theme/app_button_styles.dart';
 import 'package:quizduel/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:quizduel/features/game/presentation/screen/winner_screen.dart';
 import 'package:quizduel/features/room/domain/entitiy/room_entity.dart';
@@ -19,7 +22,6 @@ class GameScreen extends StatefulWidget {
 }
 
 class _GameScreenState extends State<GameScreen> {
-
   final player = AudioPlayer();
   int score = 0;
   int questionNumber = 0;
@@ -29,7 +31,7 @@ class _GameScreenState extends State<GameScreen> {
   late final currentUser;
   final unescape = HtmlUnescape();
 
-  int timeLeft = 10; // time in seconds
+  int timeLeft = 10;
   Timer? timer;
 
   @override
@@ -48,12 +50,13 @@ class _GameScreenState extends State<GameScreen> {
       });
       startTimer();
     } else {
-      // ✅ Update final score in the room
-      context.read<RoomBloc>().add(UpdateFinalScoreEvent(
-        roomId: widget.roomEntity.roomId,
-        userId: currentUser.id,
-        newScore: score,
-      ));
+      context.read<RoomBloc>().add(
+        UpdateFinalScoreEvent(
+          roomId: widget.roomEntity.roomId,
+          userId: currentUser.id,
+          newScore: score,
+        ),
+      );
 
       Navigator.pushReplacement(
         context,
@@ -65,13 +68,11 @@ class _GameScreenState extends State<GameScreen> {
   }
 
   void startTimer() {
-    timer?.cancel(); // reset if already running
+    timer?.cancel();
     timeLeft = 10;
     timer = Timer.periodic(const Duration(seconds: 1), (t) {
       if (timeLeft > 0) {
-        setState(() {
-          timeLeft--;
-        });
+        setState(() => timeLeft--);
       } else {
         t.cancel();
         nextQuestion();
@@ -82,21 +83,25 @@ class _GameScreenState extends State<GameScreen> {
   @override
   void dispose() {
     timer?.cancel();
+    player.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
+    final question = widget.roomEntity.quiz[questionNumber];
+    final decodedQuestion = unescape.convert(question.question);
+
     return Scaffold(
-      backgroundColor: const Color(0xFFF5E6C4),
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // HEADER
+          // 🟣 HEADER
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 40),
             decoration: BoxDecoration(
-              color: Colors.blue.shade600,
+              gradient: AppColors.primaryGradient,
               borderRadius: const BorderRadius.only(
                 bottomLeft: Radius.circular(30),
                 bottomRight: Radius.circular(30),
@@ -105,29 +110,18 @@ class _GameScreenState extends State<GameScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  "QuizDuel",
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 26,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
+                Text("QuizDuel", style: AppTextStyles.headerWhite),
                 const SizedBox(height: 10),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
                       "Question ${questionNumber + 1} / $totalQuestions",
-                      style: const TextStyle(color: Colors.white, fontSize: 16),
+                      style: AppTextStyles.smallLabel,
                     ),
                     Text(
                       "Score: $score",
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                      ),
+                      style: AppTextStyles.gameInfo,
                     ),
                   ],
                 ),
@@ -137,39 +131,39 @@ class _GameScreenState extends State<GameScreen> {
 
           const SizedBox(height: 20),
 
-          // QUESTION
+          // 🧠 QUESTION CARD
           Container(
             margin: const EdgeInsets.symmetric(horizontal: 20),
             padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: AppColors.white,
               borderRadius: BorderRadius.circular(16),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.grey.shade400,
+                  color: AppColors.shadowSoft,
                   blurRadius: 6,
                   offset: const Offset(0, 3),
-                )
+                ),
               ],
             ),
             child: Text(
-              unescape.convert(widget.roomEntity.quiz[questionNumber].question),
+              decodedQuestion,
               textAlign: TextAlign.center,
-              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w600),
+              style: AppTextStyles.question,
             ),
           ),
 
           const SizedBox(height: 30),
 
-          // ANSWERS
+          // 🔘 ANSWERS
           Expanded(
             child: Padding(
-              padding: const EdgeInsets.all(8.0),
+              padding: const EdgeInsets.all(8),
               child: ListView.builder(
-                itemCount: widget.roomEntity.quiz[questionNumber].options.length,
+                itemCount: question.options.length,
                 itemBuilder: (context, index) {
-                  final question = widget.roomEntity.quiz[questionNumber];
-                  final decodedOption = unescape.convert(question.options[index]);
+                  final decodedOption =
+                  unescape.convert(question.options[index]);
                   final isCorrect =
                       index == question.correctAnswerIndex;
                   return _buildAnswerButton(decodedOption, isCorrect, index);
@@ -178,24 +172,21 @@ class _GameScreenState extends State<GameScreen> {
             ),
           ),
 
-          // TIMER AT THE BOTTOM
+          // ⏳ TIMER
           Padding(
             padding: const EdgeInsets.all(20),
             child: Column(
               children: [
-                Text(
-                  "Time left: $timeLeft s",
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                LinearProgressIndicator(
-                  value: timeLeft / 10, // 1 → 0
-                  backgroundColor: Colors.grey.shade300,
-                  color: timeLeft > 5 ? Colors.blue : Colors.red,
-                  minHeight: 10,
+                Text("Time left: $timeLeft s", style: AppTextStyles.timer),
+                const SizedBox(height: 8),
+                ClipRRect(
                   borderRadius: BorderRadius.circular(10),
+                  child: LinearProgressIndicator(
+                    value: timeLeft / 10,
+                    backgroundColor: AppColors.white70,
+                    color: timeLeft > 5 ? AppColors.primary : AppColors.red,
+                    minHeight: 10,
+                  ),
                 ),
               ],
             ),
@@ -209,15 +200,15 @@ class _GameScreenState extends State<GameScreen> {
     final correctIndex = widget.roomEntity.quiz[questionNumber].correctAnswerIndex;
 
     Color buttonColor() {
-      if (selectedAnswerIndex == null) return Colors.blue.shade600; // 🟦 Bleu de base
-      if (index == selectedAnswerIndex && selectedAnswerIndex == correctIndex) return Colors.green; // ✅ Bonne réponse
+      if (selectedAnswerIndex == null) return AppColors.primary;
+      if (index == selectedAnswerIndex && selectedAnswerIndex == correctIndex) {
+        return AppColors.green;
+      }
       if (index == selectedAnswerIndex && selectedAnswerIndex != correctIndex) {
-        return Colors.red; // ❌ Mauvaise réponse choisie
+        return AppColors.red;
       }
-      if(index == correctIndex){
-        return Colors.green; // ✅ Bonne réponse non choisie
-      }
-      return Colors.blue.shade600;
+      if (index == correctIndex) return AppColors.green;
+      return AppColors.primary;
     }
 
     return Container(
@@ -239,17 +230,12 @@ class _GameScreenState extends State<GameScreen> {
               player.play(AssetSource("sound/negative.mp3"));
             }
           });
-
         },
-        style: ElevatedButton.styleFrom(
-          backgroundColor: buttonColor(),
-          padding: const EdgeInsets.symmetric(vertical: 16),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-          foregroundColor: Colors.white,
+        style: AppButtonStyles.primary.copyWith(
+          backgroundColor: WidgetStateProperty.all(buttonColor()),
         ),
-        child: Text(text, style: const TextStyle(fontSize: 18)),
+        child: Text(text, style: AppTextStyles.answer),
       ),
     );
   }
-
 }

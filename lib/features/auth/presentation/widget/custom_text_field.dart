@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:quizduel/core/theme/app_colors.dart';
 
 class CustomTextField extends StatelessWidget {
   const CustomTextField({
@@ -29,22 +30,22 @@ class CustomTextField extends StatelessWidget {
       keyboardType: keyboardType,
 
       decoration: InputDecoration(
-        errorStyle: const TextStyle(
-          color: Colors.red,
+        errorStyle: TextStyle(
+          color: AppColors.red,
           fontWeight: FontWeight.bold,
           fontSize: 14,
           height: 1.5,
         ),
         prefixIcon: Icon(
           iconData,
-          color: Colors.white,
+          color: AppColors.white,
         ),
         suffixIcon: onTap != null
             ? GestureDetector(
           onTap: onTap,
           child: Icon(
             obsureText ? Icons.visibility_off : Icons.visibility,
-            color: Colors.white,
+            color: AppColors.white,
           ),
         )
             : null,
@@ -53,7 +54,7 @@ class CustomTextField extends StatelessWidget {
           color: Colors.white,
         ),
         filled: true,
-        fillColor: Colors.black87,
+        fillColor: AppColors.filledTextField,
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10),
           borderSide: BorderSide.none,
@@ -68,8 +69,8 @@ class CustomTextField extends StatelessWidget {
         ),
         errorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10),
-          borderSide: const BorderSide(
-            color: Colors.red,
+          borderSide: BorderSide(
+            color: AppColors.red,
             width: 2,
           ),
         ),

@@ -2,9 +2,13 @@ import 'dart:ui';
 import 'package:awesome_snackbar_content/awesome_snackbar_content.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:quizduel/core/theme/app_colors.dart';
+import 'package:quizduel/core/theme/app_text_styles.dart';
+import 'package:quizduel/core/theme/app_button_styles.dart';
 import 'package:quizduel/core/utils/logger.dart';
 import 'package:quizduel/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:quizduel/features/auth/presentation/bloc/auth_event.dart';
+import 'package:quizduel/features/auth/presentation/bloc/auth_state.dart';
 import 'package:quizduel/features/game/presentation/bloc/quiz_bloc.dart';
 import 'package:quizduel/features/game/presentation/bloc/quiz_event.dart';
 import 'package:quizduel/features/game/presentation/bloc/quiz_state.dart';
@@ -16,6 +20,8 @@ import 'package:quizduel/features/room/presentation/bloc/room_state.dart';
 import 'package:quizduel/features/room/presentation/screen/leaderboard_screen.dart';
 import 'package:quizduel/features/room/presentation/screen/room_list_screen.dart';
 import 'package:quizduel/features/room/presentation/screen/room_screen.dart';
+
+import '../../../auth/presentation/screen/login_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -37,16 +43,13 @@ class _HomeScreenState extends State<HomeScreen> {
     });
   }
 
-
-
-
-
   @override
   void dispose() {
     _roomNameController.dispose();
     super.dispose();
   }
 
+  // 🔹 Dialogue de chargement
   void _showLoadingDialog(BuildContext context, String title) {
     if (_isDialogOpen) return;
     _isDialogOpen = true;
@@ -56,27 +59,20 @@ class _HomeScreenState extends State<HomeScreen> {
       barrierDismissible: false,
       builder: (_) => Dialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        backgroundColor: Colors.white,
+        backgroundColor: AppColors.white,
         child: Padding(
           padding: const EdgeInsets.all(24),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const CircularProgressIndicator(color: Colors.deepPurple),
+              const CircularProgressIndicator(color: AppColors.primary),
               const SizedBox(height: 20),
-              Text(
-                title,
-                style: const TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.black87,
-                ),
-              ),
+              Text(title, style: AppTextStyles.subtitle),
               const SizedBox(height: 8),
-              const Text(
+              Text(
                 "Please wait a few seconds ⏳",
                 textAlign: TextAlign.center,
-                style: TextStyle(color: Colors.black54),
+                style: AppTextStyles.hint,
               ),
             ],
           ),
@@ -146,28 +142,26 @@ class _HomeScreenState extends State<HomeScreen> {
 
     return MultiBlocListener(
       listeners: [
-        /// 🧩 ROOM BLOC
         BlocListener<RoomBloc, RoomState>(
-          listenWhen: (prev, curr) => prev.status != curr.status,
           listener: (context, state) {
             switch (state.status) {
               case RoomStatus.creatingRoom:
                 _showLoadingDialog(context, "Creating room...");
                 break;
-
               case RoomStatus.roomCreated:
                 _closeDialog(context);
                 if (state.currentRoom != null && mounted) {
-                  logger.i("✅ Room created successfully: ${state.currentRoom!.roomName}");
+                  logger.i(
+                      "✅ Room created successfully: ${state.currentRoom!.roomName}");
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (_) => RoomScreen(roomEntity: state.currentRoom!),
+                      builder: (_) =>
+                          RoomScreen(roomEntity: state.currentRoom!),
                     ),
                   );
                 }
                 break;
-
               case RoomStatus.error:
                 _closeDialog(context);
                 _showSnackBar(
@@ -176,21 +170,17 @@ class _HomeScreenState extends State<HomeScreen> {
                   ContentType.failure,
                 );
                 break;
-
               default:
                 break;
             }
           },
         ),
-
-        /// 🧠 QUIZ BLOC
         BlocListener<QuizBloc, QuizState>(
           listener: (context, quizState) {
             switch (quizState.status) {
               case QuizStatus.loading:
                 _showLoadingDialog(context, "Loading quizzes...");
                 break;
-
               case QuizStatus.loaded:
                 _closeDialog(context);
                 final roomName = _roomNameController.text.trim();
@@ -198,7 +188,6 @@ class _HomeScreenState extends State<HomeScreen> {
                   _createRoom(context, roomName);
                 }
                 break;
-
               case QuizStatus.error:
                 _closeDialog(context);
                 _showSnackBar(
@@ -207,226 +196,198 @@ class _HomeScreenState extends State<HomeScreen> {
                   ContentType.failure,
                 );
                 break;
-
               default:
                 break;
             }
           },
         ),
+        BlocListener<AuthBloc, AuthState>(
+          listener: (context, state) {
+            if (state.status.isUnauthenticated) {
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(builder: (_) => const LoginScreen()),
+              );
+            }
+          },
+        ),
       ],
       child: Scaffold(
-        backgroundColor: const Color(0xFFF5E6C4),
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         body: SafeArea(
           child: SingleChildScrollView(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 18),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // 👋 HEADER
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 18),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // 👋 HEADER
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    // User info
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text("Hello,", style: AppTextStyles.subtitle),
+                        Text(
+                          user?.username ?? 'Guest',
+                          style: AppTextStyles.pageTitle,
+                        ),
+                      ],
+                    ),
+
+                    // 🔒 Logout
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(14),
+                      child: BackdropFilter(
+                        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: AppColors.white.withOpacity(0.15),
+                            border: Border.all(
+                              color: AppColors.white.withOpacity(0.25),
+                            ),
+                            borderRadius: BorderRadius.circular(14),
+                            boxShadow: [
+                              BoxShadow(
+                                color: AppColors.shadowStrong,
+                                blurRadius: 6,
+                                offset: const Offset(0, 3),
+                              ),
+                            ],
+                          ),
+                          child: IconButton(
+                            icon: const Icon(
+                              Icons.logout_rounded,
+                              color: AppColors.primary,
+                            ),
+                            onPressed: () =>
+                                context.read<AuthBloc>().add(LoggedOut()),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+
+                const SizedBox(height: 30),
+
+                // 🏆 Stats Card
+                Container(
+                  width: double.infinity,
+                  padding:
+                  const EdgeInsets.symmetric(horizontal: 18, vertical: 22),
+                  decoration: BoxDecoration(
+                    gradient: AppColors.primaryGradient,
+                    borderRadius: BorderRadius.circular(20),
+                    boxShadow: [
+                      BoxShadow(
+                        color: AppColors.primary.withOpacity(0.25),
+                        blurRadius: 8,
+                        offset: const Offset(0, 4),
+                      )
+                    ],
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+                      const Row(
                         children: [
-                          Text(
-                            "Hello,",
-                            style: TextStyle(
-                              color: Colors.deepPurple.shade400,
-                              fontSize: 18,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                          Text(
-                            user?.username ?? 'Guest',
-                            style: const TextStyle(
-                              color: Colors.black,
-                              fontSize: 26,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
+                          Icon(Icons.emoji_events,
+                              color: AppColors.white, size: 24),
+                          SizedBox(width: 8),
+                          Text("Your Stats",
+                              style: AppTextStyles.cardTitleLight),
                         ],
                       ),
-
-                      // 🔒 LOGOUT (Glass effect)
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(14),
-                        child: BackdropFilter(
-                          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-                          child: Container(
-                            decoration: BoxDecoration(
-                              color: Colors.white.withOpacity(0.15),
-                              border: Border.all(
-                                color: Colors.white.withOpacity(0.25),
-                              ),
-                              borderRadius: BorderRadius.circular(14),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.black.withOpacity(0.15),
-                                  blurRadius: 6,
-                                  offset: const Offset(0, 3),
-                                ),
-                              ],
-                            ),
-                            child: IconButton(
-                              icon: const Icon(Icons.logout_rounded,
-                                  color: Colors.deepPurple),
-                              onPressed: () =>
-                                  context.read<AuthBloc>().add(LoggedOut()),
-                            ),
-                          ),
+                      const SizedBox(height: 8),
+                      Text("Keep climbing the ranks!",
+                          style: AppTextStyles.subtitleLight),
+                      const SizedBox(height: 18),
+                      Center(
+                        child: Column(
+                          children: [
+                            Text("${user?.score ?? 0}",
+                                style: AppTextStyles.bigNumber),
+                            const SizedBox(height: 6),
+                            Text("Score",
+                                style: AppTextStyles.subtitleLight),
+                          ],
                         ),
                       ),
                     ],
                   ),
+                ),
 
-                  const SizedBox(height: 30),
+                const SizedBox(height: 35),
 
-                  // 🏆 STATS CARD
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 22),
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [
-                          Colors.deepPurple.shade400,
-                          Colors.deepPurple.shade300,
+                const Text("Quick Actions", style: AppTextStyles.sectionTitle),
+                const SizedBox(height: 20),
+
+                _buildActionButton(
+                  title: "Create Room",
+                  color: AppColors.green,
+                  onPressed: () {
+                    showDialog(
+                      context: context,
+                      builder: (context) => AlertDialog(
+                        title: const Text("Room Name"),
+                        content: TextField(
+                          controller: _roomNameController,
+                          decoration: const InputDecoration(
+                            hintText: "Enter a name",
+                          ),
+                        ),
+                        actions: [
+                          TextButton(
+                            onPressed: () => Navigator.pop(context),
+                            child: const Text("Cancel"),
+                          ),
+                          ElevatedButton(
+                            onPressed: () {
+                              final roomName = _roomNameController.text.trim();
+                              if (roomName.isNotEmpty) {
+                                context.read<QuizBloc>().add(FetchQuizEvent());
+                                Navigator.pop(context);
+                              }
+                            },
+                            style: AppButtonStyles.primary,
+                            child: const Text("Create"),
+                          ),
                         ],
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
                       ),
-                      borderRadius: BorderRadius.circular(20),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.deepPurple.withOpacity(0.25),
-                          blurRadius: 8,
-                          offset: const Offset(0, 4),
-                        )
-                      ],
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Row(
-                          children: [
-                            Icon(Icons.emoji_events,
-                                color: Colors.white, size: 24),
-                            SizedBox(width: 8),
-                            Text(
-                              "Your Stats",
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 20,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 8),
-                        const Text(
-                          "Keep climbing the ranks!",
-                          style: TextStyle(color: Colors.white70, fontSize: 14),
-                        ),
-                        const SizedBox(height: 18),
-                        Center(
-                          child: Column(
-                            children: [
-                              Text(
-                                "${user?.score ?? 0}",
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 36,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                              const SizedBox(height: 6),
-                              const Text(
-                                "Score",
-                                style: TextStyle(
-                                  color: Colors.white70,
-                                  fontSize: 16,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
+                    );
+                  },
+                ),
+                const SizedBox(height: 12),
 
-                  const SizedBox(height: 35),
+                _buildActionButton(
+                  title: "Browse Rooms",
+                  color: AppColors.amber,
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => const RoomListScreen(),
+                      ),
+                    );
+                  },
+                ),
+                const SizedBox(height: 12),
 
-                  const Text(
-                    "Quick Actions",
-                    style: TextStyle(
-                      color: Colors.black,
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-
-                  _buildActionButton(
-                    title: "Create Room",
-                    color: Colors.green.shade600,
-                    onPressed: () {
-                      showDialog(
-                        context: context,
-                        builder: (context) => AlertDialog(
-                          title: const Text("Room Name"),
-                          content: TextField(
-                            controller: _roomNameController,
-                            decoration: const InputDecoration(
-                              hintText: "Enter a name",
-                            ),
-                          ),
-                          actions: [
-                            TextButton(
-                              onPressed: () => Navigator.pop(context),
-                              child: const Text("Cancel"),
-                            ),
-                            ElevatedButton(
-                              onPressed: () {
-                                final roomName = _roomNameController.text.trim();
-                                if (roomName.isNotEmpty) {
-                                  context.read<QuizBloc>().add(FetchQuizEvent());
-                                  Navigator.pop(context);
-                                }
-                              },
-                              child: const Text("Create"),
-                            ),
-                          ],
-                        ),
-                      );
-                    },
-                  ),
-                  const SizedBox(height: 12),
-
-                  _buildActionButton(
-                    title: "Browse Rooms",
-                    color: Colors.amber.shade600,
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (_) => const RoomListScreen()),
-                      );
-                    },
-                  ),
-                  const SizedBox(height: 12),
-
-                  _buildActionButton(
-                    title: "View Leaderboard",
-                    color: Colors.blue.shade600,
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (_) => const LeaderboardScreen()),
-                      );
-                    },
-                  ),
-                ],
-              ),
+                _buildActionButton(
+                  title: "View Leaderboard",
+                  color: AppColors.primary,
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => const LeaderboardScreen(),
+                      ),
+                    );
+                  },
+                ),
+              ],
             ),
           ),
         ),
@@ -442,23 +403,9 @@ class _HomeScreenState extends State<HomeScreen> {
     return SizedBox(
       width: double.infinity,
       child: ElevatedButton(
-        style: ElevatedButton.styleFrom(
-          backgroundColor: color,
-          padding: const EdgeInsets.symmetric(vertical: 15),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(14),
-          ),
-          elevation: 3,
-        ),
+        style: AppButtonStyles.colored(color),
         onPressed: onPressed,
-        child: Text(
-          title,
-          style: const TextStyle(
-            fontSize: 17,
-            fontWeight: FontWeight.bold,
-            color: Colors.white,
-          ),
-        ),
+        child: Text(title, style: AppTextStyles.button),
       ),
     );
   }

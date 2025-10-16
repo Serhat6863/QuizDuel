@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:provider/provider.dart';
+import 'package:quizduel/core/theme/app_theme.dart';
 import 'package:quizduel/features/auth/data/repository/user_repository_impl.dart';
 import 'package:quizduel/features/auth/data/service/firebase_user_service.dart';
 import 'package:quizduel/features/auth/domain/repository/user_repository.dart';
@@ -94,9 +95,7 @@ class MyApp extends StatelessWidget {
         )
       ],
       child: MaterialApp(
-        theme: ThemeData(
-          fontFamily: 'QuickSand',
-        ),
+        theme: AppTheme.light,
         debugShowCheckedModeBanner: false,
         title: 'Flutter Demo',
         home: BlocBuilder<AuthBloc, AuthState>(
