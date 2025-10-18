@@ -90,7 +90,7 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
                 } else if (state.status.isFailure) {
                   return Center(
                     child: Text(
-                      "Error loading leaderboard 😢",
+                      "Error loading leaderboard",
                       style: AppTextStyles.failure,
                     ),
                   );
@@ -98,7 +98,7 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
                   if (state.leaders.isEmpty) {
                     return const Center(
                       child: Text(
-                        "Leaderboard is empty 🏁",
+                        "Leaderboard is empty",
                         style: AppTextStyles.subtitle,
                       ),
                     );

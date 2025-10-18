@@ -52,6 +52,28 @@ class _RegisterScreenState extends State<RegisterScreen> {
     );
   }
 
+
+  void _showSnack(
+      BuildContext context, {
+        required String title,
+        required String message,
+        required ContentType type,
+      }) {
+    final snackBar = SnackBar(
+      elevation: 0,
+      behavior: SnackBarBehavior.floating,
+      backgroundColor: Colors.transparent,
+      content: AwesomeSnackbarContent(
+        title: title,
+        message: message,
+        contentType: type,
+      ),
+    );
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(snackBar);
+  }
+
   @override
   void dispose() {
     _emailController.dispose();
@@ -66,21 +88,20 @@ class _RegisterScreenState extends State<RegisterScreen> {
     return BlocConsumer<RegisterBloc, RegisterState>(
       listener: (context, state) {
         if (state.status.isSuccess) {
-          final snackBar = SnackBar(
-            elevation: 0,
-            behavior: SnackBarBehavior.floating,
-            backgroundColor: Colors.transparent,
-            content: AwesomeSnackbarContent(
-              title: 'Success!',
-              message: 'Account created successfully!',
-              contentType: ContentType.success,
-            ),
+          _showSnack(
+            context,
+            title: "Success",
+            message: "Account created! Please verify your email.",
+            type: ContentType.success,
           );
-          ScaffoldMessenger.of(context)
-            ..hideCurrentSnackBar()
-            ..showSnackBar(snackBar);
-
           _navigateWithAnimation(context, const VerificationEmailScreen());
+        }else if(state.status.isFailure){
+          _showSnack(
+            context,
+            title: "Error",
+            message: state.failure ?? "An error occurred during register",
+            type: ContentType.failure,
+          );
         }
       },
       builder: (context, state) {

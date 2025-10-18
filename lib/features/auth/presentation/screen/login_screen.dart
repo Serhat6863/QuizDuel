@@ -1,4 +1,6 @@
+import 'dart:io';
 import 'dart:ui';
+import 'package:awesome_snackbar_content/awesome_snackbar_content.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -11,7 +13,6 @@ import 'package:quizduel/features/auth/presentation/bloc/login_event.dart';
 import 'package:quizduel/features/auth/presentation/screen/register_screen.dart';
 import 'package:quizduel/features/auth/presentation/widget/custom_text_field.dart';
 import 'package:quizduel/features/room/presentation/screen/room_home_screen.dart';
-import '../../../../routes/route_names.dart';
 import '../bloc/login_bloc.dart';
 import '../bloc/login_state.dart';
 import 'forget_password_screen.dart';
@@ -51,6 +52,28 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
+
+  void _showSnack(
+      BuildContext context, {
+        required String title,
+        required String message,
+        required ContentType type,
+      }) {
+    final snackBar = SnackBar(
+      elevation: 0,
+      behavior: SnackBarBehavior.floating,
+      backgroundColor: Colors.transparent,
+      content: AwesomeSnackbarContent(
+        title: title,
+        message: message,
+        contentType: type,
+      ),
+    );
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(snackBar);
+  }
+
   @override
   void dispose() {
     _emailController.dispose();
@@ -65,7 +88,17 @@ class _LoginScreenState extends State<LoginScreen> {
         if (state.status.isSuccess) {
           context.read<AuthBloc>().add(LoggedIn());
           await Future.delayed(const Duration(milliseconds: 400));
-          Navigator.pushReplacementNamed(context, RouteNames.home);
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => const HomeScreen()),
+          );
+        }else if(state.status.isFailure && state.failure != null){
+          _showSnack(
+            context,
+            title: "Login Failed",
+            message: state.failure ?? "An error occurred during login.",
+            type: ContentType.failure,
+          );
         }
       },
       builder: (context, state) {
@@ -193,7 +226,13 @@ class _LoginScreenState extends State<LoginScreen> {
                                   child: GestureDetector(
                                     onTap: () {
                                       //forgot password screen
-                                      Navigator.pushNamed(context, RouteNames.passwordReset);
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (context) =>
+                                          const ForgetPasswordScreen(),
+                                        ),
+                                      );
                                     },
                                     child: Text(
                                       "Forgot Password?",

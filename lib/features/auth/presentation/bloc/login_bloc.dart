@@ -1,6 +1,5 @@
 import 'package:bloc/bloc.dart';
 import 'package:quizduel/core/error/app_failure.dart';
-import 'package:quizduel/features/auth/data/repository/user_repository_impl.dart';
 import 'package:quizduel/features/auth/domain/repository/user_repository.dart';
 import 'package:quizduel/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:quizduel/features/auth/presentation/bloc/auth_event.dart';
@@ -27,9 +26,11 @@ class LoginBloc extends Bloc<LoginEvent, LoginState> {
       emit(LoginState.success());
 
     }catch(e){
-      emit(LoginState.failure(e.toString()));
+      final errorMessage = e is AppFailure ?
+      e.message
+      : "An unknown error occurred during login.";
+
+      emit(LoginState.failure(errorMessage));
     }
   }
-
-
 }

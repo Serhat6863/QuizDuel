@@ -208,6 +208,12 @@ class _HomeScreenState extends State<HomeScreen> {
                 context,
                 MaterialPageRoute(builder: (_) => const LoginScreen()),
               );
+            }else if(state.status.isFailure){
+              _showSnackBar(
+                "Error",
+                state.failure ?? "An error occurred during logout.",
+                ContentType.failure,
+              );
             }
           },
         ),

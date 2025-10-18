@@ -1,10 +1,10 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:quizduel/core/error/app_failure.dart';
 import 'package:quizduel/core/utils/logger.dart';
 import 'package:quizduel/features/auth/domain/entity/user_entity.dart';
 import 'package:quizduel/features/room/domain/enums/room_game_status.dart';
 import 'package:quizduel/features/room/domain/repository/room_repository.dart';
 import 'package:quizduel/features/auth/domain/repository/user_repository.dart';
-
 import 'room_event.dart';
 import 'room_state.dart';
 
@@ -28,46 +28,45 @@ class RoomBloc extends Bloc<RoomEvent, RoomState> {
     on<GetRoomByIdEvent>(_onGetRoomById);
   }
 
-  ///  Créer une room
+  // 🔹 CREATE ROOM
   Future<void> _onCreateRoom(
       CreateRoomEvent event,
       Emitter<RoomState> emit,
       ) async {
-    logger.i("🛠️ Création de la room: ${event.roomEntity.roomName}");
+    logger.i("🛠️ Creating room: ${event.roomEntity.roomName}");
     emit(RoomState.creatingRoom());
 
     try {
       final room = await roomRepository.createRoom(event.roomEntity);
 
       if (room == null) {
-        logger.w("⚠️ La création de la room a échoué, résultat null");
-        emit(RoomState.error("Échec de la création de la room"));
+        logger.w("⚠️ Room creation failed — returned null");
+        emit(RoomState.error("Failed to create room."));
         return;
       }
 
       final currentUser = await userRepository.getCurrentUser();
       if (currentUser != null && room.hostId == currentUser.id) {
         await roomRepository.autoDeleteRoom(room.roomId);
-        logger.d("🧹 Auto-delete activé pour la room ${room.roomId}");
+        logger.d("🧹 Auto-delete enabled for room ${room.roomId}");
       }
 
-      logger.i("✅ Room '${room.roomName}' créée avec succès (${room.roomId})");
+      logger.i("✅ Room '${room.roomName}' successfully created (${room.roomId})");
       emit(RoomState.roomCreated(room));
 
-      // Écoute des joueurs en live
       add(ListenPlayersEvent(roomId: room.roomId));
     } catch (e, s) {
-      logger.e("❌ Erreur lors de la création de la room", error: e, stackTrace: s);
-      emit(RoomState.error("Erreur création room: ${e.toString()}"));
+      logger.e("❌ Error while creating room", error: e, stackTrace: s);
+      emit(RoomState.error(_extractMessage(e)));
     }
   }
 
-  ///  Rejoindre une room
+  // 🔹 JOIN ROOM
   Future<void> _onJoinRoom(
       JoinRoomEvent event,
       Emitter<RoomState> emit,
       ) async {
-    logger.i("👥 Tentative de rejoindre la room ${event.roomId}");
+    logger.i("👥 Attempting to join room ${event.roomId}");
     emit(RoomState.joiningRoom());
 
     try {
@@ -77,169 +76,167 @@ class RoomBloc extends Bloc<RoomEvent, RoomState> {
       final joinedRoom = rooms.firstWhere(
             (r) => r.roomId == event.roomId,
         orElse: () {
-          logger.w("⚠️ Room ${event.roomId} introuvable après tentative de join");
-          throw Exception("Room not found");
+          logger.w("⚠️ Room ${event.roomId} not found after join attempt");
+          throw AppFailure(message: "Room not found", code: "room-not-found");
         },
       );
 
-      logger.i("✅ ${event.userEntity.username} a rejoint la room ${event.roomId}");
+      logger.i("✅ ${event.userEntity.username} joined room ${event.roomId}");
       emit(RoomState.roomCreated(joinedRoom));
 
       add(ListenPlayersEvent(roomId: event.roomId));
     } catch (e, s) {
-      logger.e("❌ Erreur lors de la jointure de la room ${event.roomId}", error: e, stackTrace: s);
-      emit(RoomState.error("Erreur join room: ${e.toString()}"));
+      logger.e("❌ Error joining room ${event.roomId}", error: e, stackTrace: s);
+      emit(RoomState.error(_extractMessage(e)));
     }
   }
 
-  ///  Quitter une room
+  // 🔹 LEAVE ROOM
   Future<void> _onLeaveRoom(
       LeaveRoomEvent event,
       Emitter<RoomState> emit,
       ) async {
-    logger.i("🚪 Tentative de quitter la room ${event.roomId}");
+    logger.i("🚪 ${event.userEntity.username} leaving room ${event.roomId}");
     try {
       await roomRepository.leaveRoom(event.roomId, event.userEntity);
-      logger.i("✅ ${event.userEntity.username} a quitté la room ${event.roomId}");
+      logger.i("✅ ${event.userEntity.username} left room ${event.roomId}");
       emit(RoomState.roomLeft());
     } catch (e, s) {
-      logger.e("❌ Erreur lors du leave de la room ${event.roomId}", error: e, stackTrace: s);
-      emit(RoomState.error("Erreur leave room: ${e.toString()}"));
+      logger.e("❌ Error leaving room ${event.roomId}", error: e, stackTrace: s);
+      emit(RoomState.error(_extractMessage(e)));
     }
   }
 
-  ///  Supprimer une room
+  // 🔹 DELETE ROOM
   Future<void> _onDeleteRoom(
       DeleteRoomEvent event,
       Emitter<RoomState> emit,
       ) async {
-    logger.w("🗑️ Suppression manuelle de la room ${event.roomId}");
+    logger.w("🗑️ Deleting room ${event.roomId}");
     try {
       await roomRepository.deleteRoom(event.roomId);
-      logger.i("✅ Room ${event.roomId} supprimée avec succès");
+      logger.i("✅ Room ${event.roomId} deleted successfully");
       emit(RoomState.roomDeleted());
     } catch (e, s) {
-      logger.e("❌ Erreur suppression room ${event.roomId}", error: e, stackTrace: s);
-      emit(RoomState.error("Erreur suppression room: ${e.toString()}"));
+      logger.e("❌ Error deleting room ${event.roomId}", error: e, stackTrace: s);
+      emit(RoomState.error(_extractMessage(e)));
     }
   }
 
-  ///  Récupérer les rooms disponibles
+  // 🔹 FETCH ROOMS
   Future<void> _onFetchAvailableRooms(
       FetchAvailableRoomsEvent event,
       Emitter<RoomState> emit,
       ) async {
-    logger.d("📡 Récupération des rooms disponibles...");
+    logger.d("📡 Fetching available rooms...");
     emit(RoomState.loadingRooms());
 
     try {
       final rooms = await roomRepository.getAvailableRooms();
-      logger.i("✅ ${rooms.length} rooms récupérées depuis Firebase");
+      logger.i("✅ ${rooms.length} rooms fetched from Firebase");
       emit(RoomState.roomLoaded(rooms));
     } catch (e, s) {
-      logger.e("❌ Erreur lors du fetch des rooms", error: e, stackTrace: s);
-      emit(RoomState.error("Erreur récupération rooms: ${e.toString()}"));
+      logger.e("❌ Error fetching rooms", error: e, stackTrace: s);
+      emit(RoomState.error(_extractMessage(e)));
     }
   }
 
-  ///  Écouter les joueurs d’une room
+  // 🔹 LISTEN PLAYERS STREAM
   Future<void> _onListenPlayers(
       ListenPlayersEvent event,
       Emitter<RoomState> emit,
       ) async {
-    logger.d("👂 Écoute en temps réel des joueurs de la room ${event.roomId}");
+    logger.d("👂 Listening to players in room ${event.roomId}");
     await emit.forEach<List<UserEntity>>(
       roomRepository.playersStream(event.roomId),
       onData: (players) {
-        logger.d("📢 ${players.length} joueurs dans la room ${event.roomId}");
+        logger.d("📢 ${players.length} players detected in ${event.roomId}");
         return state.copyWith(
           status: RoomStatus.playersUpdated,
           players: players,
         );
       },
       onError: (error, _) {
-        logger.e("❌ Erreur dans le stream des joueurs de ${event.roomId}", error: error);
-        return RoomState.error("Erreur stream players: ${error.toString()}");
+        logger.e("❌ Player stream error for ${event.roomId}", error: error);
+        return RoomState.error(_extractMessage(error));
       },
     );
   }
 
-
-  Future<void> _onListenStatus(ListenStatusEvent event, Emitter<RoomState> emit) async {
+  // 🔹 LISTEN STATUS STREAM
+  Future<void> _onListenStatus(
+      ListenStatusEvent event,
+      Emitter<RoomState> emit,
+      ) async {
     try {
-      logger.d("👂 Écoute en temps réel du status de la room ${event.roomId}");
+      logger.d("👂 Listening to room status for ${event.roomId}");
       await emit.forEach<RoomGameStatus>(
         roomRepository.roomStatusStream(event.roomId),
         onData: (status) {
-          logger.d("📢 Status de la room ${event.roomId} mis à jour: ${status}");
+          logger.d("📢 Room ${event.roomId} status updated → $status");
 
           if (status.isPlaying) {
-            //  On envoie la room actuelle dans le nouvel état
             return RoomState.gameStarted(state.currentRoom!);
           } else {
             return state;
           }
         },
         onError: (error, _) {
-          logger.e("❌ Erreur stream du status ${event.roomId}", error: error);
-          return RoomState.error("Erreur stream status: ${error.toString()}");
+          logger.e("❌ Status stream error for ${event.roomId}", error: error);
+          return RoomState.error(_extractMessage(error));
         },
       );
     } catch (e) {
-      logger.e("❌ Erreur dans le stream du status de ${event.roomId}", error: e);
-      emit(RoomState.error("Erreur stream status: ${e.toString()}"));
+      logger.e("❌ Error listening to room status ${event.roomId}", error: e);
+      emit(RoomState.error(_extractMessage(e)));
     }
   }
 
-
-  Future<void> _onStartGame(StartGameEvent event, Emitter<RoomState> emit) async{
-    try{
-      logger.i("▶️ Démarrage du jeu dans la room ${event.roomId}");
+  // 🔹 START GAME
+  Future<void> _onStartGame(StartGameEvent event, Emitter<RoomState> emit) async {
+    try {
+      logger.i("▶️ Starting game in room ${event.roomId}");
       await roomRepository.startGame(event.roomId);
-      logger.i("✅ Jeu démarré dans la room ${event.roomId}");
-    }catch(e){
-      logger.e("❌ Erreur lors du démarrage du jeu dans la room ${event.roomId}", error: e);
-      emit(RoomState.error("Erreur démarrage jeu: ${e.toString()}"));
+      logger.i("✅ Game started successfully in ${event.roomId}");
+    } catch (e) {
+      logger.e("❌ Error starting game in ${event.roomId}", error: e);
+      emit(RoomState.error(_extractMessage(e)));
     }
   }
 
+  // 🔹 UPDATE FINAL SCORE
   Future<void> _onUpdateFinalScore(UpdateFinalScoreEvent event, Emitter<RoomState> emit) async {
     emit(state.copyWith(status: RoomStatus.updatingScore));
 
     try {
-      logger.i("🔄 Updating final score of ${event.userId} to ${event.newScore} in room ${event.roomId}");
+      logger.i("🔄 Updating final score for ${event.userId} → ${event.newScore} (room ${event.roomId})");
 
-      //  1. Update score in User collection (global leaderboard)
       await userRepository.updateScore(event.userId, event.newScore);
-      logger.i("✅ User global score updated in Firestore");
-
-      //  2. Update score inside the Room document (for leaderboard in room)
       await roomRepository.updateRoomScore(event.roomId, event.userId, event.newScore);
-      logger.i("✅ Score updated inside room");
 
-      //  3. Refresh current room to get updated scores
       final updatedRoom = await roomRepository.getRoomById(event.roomId);
+      logger.i("✅ Scores updated successfully in room ${event.roomId}");
 
       emit(RoomState.scoreUpdated(updatedRoom));
     } catch (e, s) {
-      logger.e("❌ Error while updating final score for ${event.userId}", error: e, stackTrace: s);
-      emit(RoomState.error("Error updating final score: ${e.toString()}"));
+      logger.e("❌ Error updating final score for ${event.userId}", error: e, stackTrace: s);
+      emit(RoomState.error(_extractMessage(e)));
     }
   }
 
-
-
-  Future<void> _onGetRoomById(GetRoomByIdEvent event, Emitter<RoomState> emit) async{
-    try{
-      logger.d("🔍 Récupération de la room par ID: ${event.roomId}");
+  // 🔹 GET ROOM BY ID
+  Future<void> _onGetRoomById(GetRoomByIdEvent event, Emitter<RoomState> emit) async {
+    try {
+      logger.d("🔍 Fetching room by ID: ${event.roomId}");
       final room = await roomRepository.getRoomById(event.roomId);
-
       emit(RoomState.fetchingRoomById(room));
-
-    }catch(e){
-      logger.e("❌ Erreur lors de la récupération de la room ${event.roomId}", error: e);
-      emit(RoomState.error("Erreur récupération room: ${e.toString()}"));
+    } catch (e) {
+      logger.e("❌ Error fetching room ${event.roomId}", error: e);
+      emit(RoomState.error(_extractMessage(e)));
     }
   }
 
+  // 🔧 Helpers for AppFailure extraction
+  String _extractMessage(Object e) =>
+      e is AppFailure ? e.message : "An unexpected error occurred.";
 }

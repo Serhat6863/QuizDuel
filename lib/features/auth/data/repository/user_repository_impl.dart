@@ -1,9 +1,9 @@
+import 'package:quizduel/core/error/app_failure.dart';
 import 'package:quizduel/features/auth/data/model/login_user_request.dart';
+import 'package:quizduel/features/auth/data/model/register_user_request.dart';
 import 'package:quizduel/features/auth/data/service/firebase_user_service.dart';
 import 'package:quizduel/features/auth/domain/entity/user_entity.dart';
 import 'package:quizduel/features/auth/domain/repository/user_repository.dart';
-
-import '../model/register_user_request.dart';
 
 class UserRepositoryImpl implements UserRepository {
   final FirebaseUserService firebaseUserService;
@@ -15,11 +15,12 @@ class UserRepositoryImpl implements UserRepository {
     try {
       await firebaseUserService.signOut();
     } catch (e) {
-      throw Exception("Error in UserRepositoryImpl.signOut: $e");
+      throw AppFailure(
+        message: "Error during signOut: ${_extractMessage(e)}",
+        code: _extractCode(e),
+      );
     }
   }
-
-
 
   @override
   Future<UserEntity> signIn(String email, String password) async {
@@ -31,19 +32,26 @@ class UserRepositoryImpl implements UserRepository {
       );
 
       if (userModel == null) {
-        throw Exception("SignIn failed: no user returned from Firebase");
+        throw AppFailure(message: "SignIn failed: no user returned from Firebase", code: "null-user");
       }
 
       return userModel.toEntity();
     } catch (e) {
-      throw Exception("Error in UserRepositoryImpl.signIn: $e");
+      throw AppFailure(
+        message: "Error in signIn: ${_extractMessage(e)}",
+        code: _extractCode(e),
+      );
     }
   }
 
   @override
-  Future<UserEntity> register(String email, String password, String username) async{
-    try{
-      final request = RegisterUserRequestDto(email: email, password: password, username: username);
+  Future<UserEntity> register(String email, String password, String username) async {
+    try {
+      final request = RegisterUserRequestDto(
+        email: email,
+        password: password,
+        username: username,
+      );
 
       final userModel = await firebaseUserService.registerWithEmailAndPassword(
         request.email,
@@ -51,96 +59,125 @@ class UserRepositoryImpl implements UserRepository {
         request.password,
       );
 
-
-      if(userModel == null){
-        throw Exception("Register failed: no user returned from Firebase");
+      if (userModel == null) {
+        throw AppFailure(message: "Register failed: no user returned from Firebase", code: "null-user");
       }
-      return userModel.toEntity();
 
-    }catch(e){
-      throw Exception("Error in UserRepositoryImpl.register: $e");
+      return userModel.toEntity();
+    } catch (e) {
+      throw AppFailure(
+        message: "Error in register: ${_extractMessage(e)}",
+        code: _extractCode(e),
+      );
     }
   }
 
   @override
-  Future<UserEntity?> getCurrentUser() async{
-    try{
+  Future<UserEntity?> getCurrentUser() async {
+    try {
       final userModel = await firebaseUserService.getCurrentUser();
-
-      if(userModel == null){
-        return null;
-      }
-
-      return userModel.toEntity();
-
-    }catch(e){
-      throw Exception("Error in UserRepositoryImpl.getCurrentUser: $e");
+      return userModel?.toEntity();
+    } catch (e) {
+      throw AppFailure(
+        message: "Error in getCurrentUser: ${_extractMessage(e)}",
+        code: _extractCode(e),
+      );
     }
   }
 
   @override
-  Future<String> getUsernameById(String userId) async{
-    try{
-      final username = await firebaseUserService.getUsernameById(userId);
-      return username;
-    }catch(e){
-      throw Exception("Error in UserRepositoryImpl.getUsernameById: $e");
+  Future<String> getUsernameById(String userId) async {
+    try {
+      return await firebaseUserService.getUsernameById(userId);
+    } catch (e) {
+      throw AppFailure(
+        message: "Error in getUsernameById: ${_extractMessage(e)}",
+        code: _extractCode(e),
+      );
     }
   }
 
   @override
-  Future<List<UserEntity>> getAllUsers() async{
-    try{
-      final userModels = await firebaseUserService.getAllUser();
+  Future<List<UserEntity>> getAllUsers() async {
+    try {
+      final userModels = await firebaseUserService.getAllUsers();
       return userModels.map((e) => e.toEntity()).toList();
-    }catch(e){
-      throw Exception("Error in UserRepositoryImpl.getAllUsers: $e");
+    } catch (e) {
+      throw AppFailure(
+        message: "Error in getAllUsers: ${_extractMessage(e)}",
+        code: _extractCode(e),
+      );
     }
   }
 
   @override
-  Future<void> updateScore(String userId, int newScore)  async{
-    try{
+  Future<void> updateScore(String userId, int newScore) async {
+    try {
       await firebaseUserService.updateScore(userId, newScore);
-    }catch(e){
-      throw Exception("Error in UserRepositoryImpl.updateScore: $e");
+    } catch (e) {
+      throw AppFailure(
+        message: "Error in updateScore: ${_extractMessage(e)}",
+        code: _extractCode(e),
+      );
     }
   }
 
   @override
-  Future<bool> checkEmailVerified() async{
-    try{
-      final isVerified = await firebaseUserService.checkEmailVerified();
-      return isVerified;
-    }catch(e){
-      throw Exception("Error in UserRepositoryImpl.checkEmailVerified: $e");
+  Future<bool> checkEmailVerified() async {
+    try {
+      return await firebaseUserService.checkEmailVerified();
+    } catch (e) {
+      throw AppFailure(
+        message: "Error in checkEmailVerified: ${_extractMessage(e)}",
+        code: _extractCode(e),
+      );
     }
   }
 
   @override
-  Future<void> resentEmailVerification() async{
-    try{
+  Future<void> resentEmailVerification() async {
+    try {
       await firebaseUserService.resentEmailVerification();
-    }catch(e){
-      throw Exception("Error in UserRepositoryImpl.resentEmailVerification: $e");
+    } catch (e) {
+      throw AppFailure(
+        message: "Error in resentEmailVerification: ${_extractMessage(e)}",
+        code: _extractCode(e),
+      );
     }
   }
 
   @override
-  Future<void> deleteAccount() async{
-    try{
+  Future<void> deleteAccount() async {
+    try {
       await firebaseUserService.deleteAccount();
-    }catch(e){
-      throw Exception("Error in UserRepositoryImpl.deleteAccount: $e");
+    } catch (e) {
+      throw AppFailure(
+        message: "Error in deleteAccount: ${_extractMessage(e)}",
+        code: _extractCode(e),
+      );
     }
   }
 
   @override
-  Future<void> resetPassword(String email) async{
-    try{
+  Future<void> resetPassword(String email) async {
+    try {
       await firebaseUserService.resetPassword(email);
-    }catch(e){
-      throw Exception("Error in UserRepositoryImpl.resetPassword: $e");
+    } catch (e) {
+      throw AppFailure(
+        message: "Error in resetPassword: ${_extractMessage(e)}",
+        code: _extractCode(e),
+      );
     }
+  }
+
+  // 🔹 Helpers pour éviter la répétition
+  String _extractMessage(Object e) {
+    if (e is AppFailure) return e.message;
+    return e.toString();
+  }
+
+  String _extractCode(Object e) {
+    if (e is AppFailure) return e.code;
+    return 'unknown';
   }
 }

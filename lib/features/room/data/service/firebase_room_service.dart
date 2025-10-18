@@ -1,4 +1,5 @@
 import 'package:firebase_database/firebase_database.dart';
+import 'package:quizduel/core/error/app_failure.dart';
 import 'package:quizduel/core/utils/logger.dart';
 import 'package:quizduel/features/auth/data/model/user_model.dart';
 import 'package:quizduel/features/room/domain/enums/room_game_status.dart';
@@ -7,17 +8,14 @@ import '../model/room_model.dart';
 class FirebaseRoomService {
   final DatabaseReference db = FirebaseDatabase.instance.ref();
 
-  //  CREATE ROOM
+  // 🔹 CREATE ROOM
   Future<RoomModel?> createRoom(RoomModel room) async {
     try {
-      logger.i("🛠️ Tentative de création d'une room pour ${room.hostId}");
+      logger.i("🛠️ Creating a new room for ${room.hostId}...");
 
       final roomRef = db.child("rooms").push();
       final roomId = roomRef.key ?? "unknown";
 
-      logger.d("🆔 Génération d’un nouvel ID de room: $roomId");
-
-      // 🔄 Conversion des users
       final Map<String, dynamic> userData = {
         for (var u in room.user)
           u.id: (u is UserModel
@@ -28,6 +26,8 @@ class FirebaseRoomService {
             username: u.username,
             isReady: u.isReady,
             score: u.score,
+            isOnline: u.isOnline,
+            deviceId: u.deviceId,
           ).toJson())
       };
 
@@ -35,110 +35,128 @@ class FirebaseRoomService {
         ...room.toJson(),
         "roomId": roomId,
         "user": userData,
-        "status": "waiting", // ✅ status initial
+        "status": "waiting",
         "createdAt": DateTime.now().toIso8601String(),
       };
 
-      logger.d("📤 Envoi des données Firebase pour la room $roomId");
       await roomRef.set(roomData);
-      logger.i("✅ Room créée avec succès: $roomId");
+      logger.i("✅ Room created successfully: $roomId");
 
       return RoomModel.fromJson(roomData);
     } catch (e, s) {
-      logger.e("❌ Erreur lors de la création de la room: $e", error: e, stackTrace: s);
-      throw Exception("Erreur création room: $e");
+      logger.e("❌ Failed to create room: $e", error: e, stackTrace: s);
+      throw AppFailure(
+        message: "Failed to create room: ${e.toString()}",
+        code: "create-room-failed",
+      );
     }
   }
 
-  //  AUTO DELETE ON DISCONNECT
+  // 🔹 AUTO DELETE ON DISCONNECT
   Future<void> setAutoDeleteOnDisconnect(String roomId) async {
     try {
-      logger.i("⚙️ Configuration de la suppression auto pour $roomId");
+      logger.i("⚙️ Setting up auto-delete for room $roomId...");
       final roomRef = db.child("rooms/$roomId");
       await roomRef.onDisconnect().remove();
-      logger.i("🗑️ Suppression automatique activée pour $roomId");
+      logger.i("🗑️ Auto-delete configured for room $roomId");
     } catch (e, s) {
-      logger.e("❌ Erreur lors de l'activation de la suppression automatique: $e",
-          error: e, stackTrace: s);
-      throw Exception("Erreur suppression auto: $e");
+      logger.e("❌ Failed to set auto-delete: $e", error: e, stackTrace: s);
+      throw AppFailure(
+        message: "Failed to set auto-delete: $e",
+        code: "auto-delete-failed",
+      );
     }
   }
 
-  //  DELETE ROOM
+  // 🔹 DELETE ROOM
   Future<void> deleteRoom(String roomId) async {
     try {
-      logger.i("🗑️ Suppression manuelle de la room $roomId");
+      logger.i("🗑️ Deleting room $roomId...");
       await db.child("rooms/$roomId").remove();
-      logger.i("✅ Room $roomId supprimée avec succès");
+      logger.i("✅ Room $roomId deleted successfully");
     } catch (e, s) {
-      logger.e("❌ Erreur lors de la suppression de la room $roomId: $e", error: e, stackTrace: s);
-      throw Exception("Erreur suppression room: $e");
+      logger.e("❌ Failed to delete room: $e", error: e, stackTrace: s);
+      throw AppFailure(
+        message: "Failed to delete room: ${e.toString()}",
+        code: "delete-room-failed",
+      );
     }
   }
 
-  //  JOIN ROOM
+  // 🔹 JOIN ROOM
   Future<void> joinRoom(String roomId, UserModel user) async {
     try {
-      logger.i("👥 ${user.username} tente de rejoindre la room $roomId");
-      final userRef = db.child("rooms/$roomId/user/${user.id}");
-      // verifier si la room est pleine
+      logger.i("👥 ${user.username} is trying to join room $roomId...");
+
       final roomSnapshot = await db.child("rooms/$roomId").get();
       if (!roomSnapshot.exists) {
-        throw Exception("Room $roomId n'existe pas");
+        throw AppFailure(message: "Room $roomId does not exist.", code: "room-not-found");
       }
+
       final roomData = roomSnapshot.value as Map<dynamic, dynamic>;
       final currentUsers = roomData['user'] as Map<dynamic, dynamic>? ?? {};
+
       if (currentUsers.length >= (roomData['maxPlayers'] ?? 4)) {
-        throw Exception("Room $roomId est pleine");
+        throw AppFailure(message: "Room $roomId is already full.", code: "room-full");
       }
+
+      final userRef = db.child("rooms/$roomId/user/${user.id}");
       await userRef.set(user.toJson());
-      logger.i("✅ ${user.username} a rejoint la room $roomId");
+      logger.i("✅ ${user.username} joined room $roomId successfully.");
     } catch (e, s) {
-      logger.e("❌ Erreur lors de la jointure de la room $roomId: $e", error: e, stackTrace: s);
-      throw Exception("Erreur join room: $e");
+      logger.e("❌ Error joining room: $e", error: e, stackTrace: s);
+      throw AppFailure(
+        message: "Error while joining room: ${_extractMessage(e)}",
+        code: _extractCode(e),
+      );
     }
   }
 
-  //  LEAVE ROOM
+  // 🔹 LEAVE ROOM
   Future<void> leaveRoom(String roomId, UserModel user) async {
     try {
-      logger.i("🚪 ${user.username} quitte la room $roomId");
+      logger.i("🚪 ${user.username} is leaving room $roomId...");
       final userRef = db.child("rooms/$roomId/user/${user.id}");
       await userRef.remove();
-      logger.i("✅ ${user.username} a quitté la room $roomId");
+      logger.i("✅ ${user.username} left room $roomId.");
     } catch (e, s) {
-      logger.e("❌ Erreur lors du départ de la room $roomId: $e", error: e, stackTrace: s);
-      throw Exception("Erreur leave room: $e");
+      logger.e("❌ Failed to leave room: $e", error: e, stackTrace: s);
+      throw AppFailure(
+        message: "Error while leaving room: ${_extractMessage(e)}",
+        code: _extractCode(e),
+      );
     }
   }
 
-  // FETCH ROOMS
+  // 🔹 FETCH AVAILABLE ROOMS
   Future<List<RoomModel>> getAvailableRooms() async {
     try {
-      logger.i("📡 Récupération des rooms disponibles...");
+      logger.i("📡 Fetching available rooms...");
       final snapshot = await db.child("rooms").get();
 
       if (snapshot.exists && snapshot.value is Map) {
         final rawMap = snapshot.value as Map<Object?, Object?>;
-
         final rooms = rawMap.entries.map((entry) {
           final roomData = deepCast(entry.value as Map);
           return RoomModel.fromJson(roomData);
         }).toList();
 
-        logger.i("✅ ${rooms.length} rooms trouvées");
+        logger.i("✅ ${rooms.length} available rooms found.");
         return rooms;
       }
 
-      logger.w("⚠️ Aucune room trouvée dans Firebase");
+      logger.w("⚠️ No rooms found in the database.");
       return [];
     } catch (e, s) {
-      logger.e("❌ Erreur lors de la récupération des rooms: $e", error: e, stackTrace: s);
-      throw Exception("Erreur fetch rooms: $e");
+      logger.e("❌ Failed to fetch rooms: $e", error: e, stackTrace: s);
+      throw AppFailure(
+        message: "Failed to fetch rooms: ${_extractMessage(e)}",
+        code: _extractCode(e),
+      );
     }
   }
 
-  //  DEEP CAST MAP
+  // 🔹 DEEP CAST MAP
   Map<String, dynamic> deepCast(Map input) {
     return input.map((key, value) {
       if (value is Map) {
@@ -154,15 +172,15 @@ class FirebaseRoomService {
     });
   }
 
-  //  PLAYER LIST STREAM
+  // 🔹 PLAYER LIST STREAM
   Stream<List<UserModel>> playerListStream(String roomId) {
     final usersRef = db.child("rooms/$roomId/user");
-    logger.d("👂 Stream des joueurs actif pour la room $roomId");
+    logger.d("👂 Listening to player updates for room $roomId...");
 
     return usersRef.onValue.map((event) {
       final data = event.snapshot.value as Map<dynamic, dynamic>?;
       if (data == null) {
-        logger.w("⚠️ Aucun joueur détecté dans la room $roomId");
+        logger.w("⚠️ No players detected in room $roomId.");
         return [];
       }
 
@@ -170,78 +188,85 @@ class FirebaseRoomService {
         return UserModel.fromJson(Map<String, dynamic>.from(userData));
       }).toList();
 
-      logger.t("👥 ${players.length} joueurs détectés dans $roomId");
+      logger.t("👥 ${players.length} players currently in room $roomId.");
       return players;
     });
   }
 
-
-  //  STATUS STREAM
+  // 🔹 ROOM STATUS STREAM
   Stream<RoomGameStatus> roomStatusStream(String roomId) {
     try {
-      final statusRef = db.child("rooms/$roomId/status"); // ✅ corrigé ici
-      logger.d("👂 Stream du status actif pour la room $roomId");
-
+      final statusRef = db.child("rooms/$roomId/status");
+      logger.d("👂 Listening to room status updates for $roomId...");
       return statusRef.onValue.map((event) {
         final rawStatus = event.snapshot.value?.toString() ?? 'waiting';
-        logger.i("🎯 Status mis à jour pour $roomId → $rawStatus");
+        logger.i("🎯 Room $roomId status updated → $rawStatus");
         return RoomGameStatusX.fromString(rawStatus);
       });
-    } catch (e, s) {
-      logger.e("❌ Erreur lors du stream du status de la room $roomId: $e",
-          error: e, stackTrace: s);
-      throw Exception("Erreur room status stream: $e");
+    } catch (e) {
+      throw AppFailure(
+        message: "Error while streaming room status: ${_extractMessage(e)}",
+        code: _extractCode(e),
+      );
     }
   }
 
-  //  START GAME
+  // 🔹 START GAME
   Future<void> startGame(String roomId) async {
     try {
-      logger.i("▶️ Démarrage du jeu dans la room $roomId");
+      logger.i("▶️ Starting game in room $roomId...");
       final statusRef = db.child("rooms/$roomId/status");
       await statusRef.set(RoomGameStatus.playing.toShortString());
-      logger.i("🔥 Status mis à jour dans Firebase → ${RoomGameStatus.playing.toShortString()}");
+      logger.i("🔥 Room status updated → playing");
     } catch (e, s) {
-      logger.e("❌ Erreur lors du démarrage du jeu dans la room $roomId: $e",
-          error: e, stackTrace: s);
-      throw Exception("Erreur start game: $e");
+      logger.e("❌ Failed to start game: $e", error: e, stackTrace: s);
+      throw AppFailure(
+        message: "Error while starting the game: ${_extractMessage(e)}",
+        code: _extractCode(e),
+      );
     }
   }
 
-  //update room score
+  // 🔹 UPDATE ROOM SCORE
   Future<void> updateRoomScore(String roomId, String userId, int newScore) async {
-    try{
-      logger.i("🔄 Mise à jour du score pour l'utilisateur $userId dans la room $roomId à $newScore");
+    try {
+      logger.i("🔄 Updating score for user $userId in room $roomId → $newScore");
       final scoreRef = db.child("rooms/$roomId/user/$userId/score");
       await scoreRef.set(newScore);
-      logger.i("✅ Score mis à jour pour l'utilisateur $userId dans la room $roomId à $newScore");
-    }catch(e){
-      logger.e("❌ Erreur lors de la mise à jour du score pour l'utilisateur $userId dans la room $roomId: $e", error: e);
-      throw Exception("Something went wrong while updating the score: $e");
+      logger.i("✅ Score updated successfully for $userId in room $roomId");
+    } catch (e, s) {
+      logger.e("❌ Failed to update score: $e", error: e, stackTrace: s);
+      throw AppFailure(
+        message: "Error while updating score: ${_extractMessage(e)}",
+        code: _extractCode(e),
+      );
     }
   }
 
-
-  //get room by id
+  // 🔹 GET ROOM BY ID
   Future<RoomModel> getRoomById(String roomId) async {
-    try{
-      logger.i("🔍 Récupération de la room par ID: $roomId");
+    try {
+      logger.i("🔍 Fetching room by ID: $roomId");
       final roomRef = db.child("rooms/$roomId");
       final snapshot = await roomRef.get();
 
       if (snapshot.exists && snapshot.value is Map) {
         final roomData = deepCast(snapshot.value as Map);
         final room = RoomModel.fromJson(roomData);
-        logger.i("✅ Room récupérée avec succès: $roomId");
+        logger.i("✅ Room $roomId fetched successfully.");
         return room;
       } else {
-        logger.w("⚠️ Aucune room trouvée avec l'ID: $roomId");
-        throw Exception("Room not found with ID: $roomId");
+        throw AppFailure(message: "Room not found with ID: $roomId", code: "room-not-found");
       }
-
-    }catch(e){
-      throw Exception("Something went wrong while getting the room by id: $e");
+    } catch (e) {
+      throw AppFailure(
+        message: "Error while fetching room by ID: ${_extractMessage(e)}",
+        code: _extractCode(e),
+      );
     }
   }
 
+  // 🔧 Helpers
+  String _extractMessage(Object e) => e is AppFailure ? e.message : e.toString();
+  String _extractCode(Object e) => e is AppFailure ? e.code : 'unknown';
 }

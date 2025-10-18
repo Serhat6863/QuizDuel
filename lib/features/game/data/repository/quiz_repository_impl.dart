@@ -16,7 +16,7 @@ class QuizRepositoryImpl implements QuizRepository{
 
       if(response.response.statusCode != 200){
         logger.e("Erreur lors de la récupération des quiz: ${response.response.statusCode}");
-        throw("Erreur lors de la récupération des quiz: ${response.response.statusCode}");
+        throw Exception("Erreur lors de la récupération des quiz: ${response.response.statusCode}");
       }
 
 
@@ -26,7 +26,7 @@ class QuizRepositoryImpl implements QuizRepository{
 
     } catch (e) {
       logger.e("Erreur lors de la récupération des quiz: $e");
-      throw("Erreur lors de la récupération des quiz: $e");
+      throw Exception("Erreur lors de la récupération des quiz: $e");
 
     }
   }

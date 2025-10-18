@@ -22,7 +22,11 @@ class RegisterBloc extends Bloc<RegisterEvent, RegisterState>{
       emit(RegisterState.success());
 
     }catch(e){
-      emit(RegisterState.failure(e.toString()));
+      final errorMessage = e is AppFailure ?
+      e.message
+          : "An unknown error occurred during registration.";
+
+      emit(RegisterState.failure(errorMessage));
     }
   }
 
