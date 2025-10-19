@@ -15,7 +15,7 @@ class MockUserRepository extends Mock implements UserRepository {}
 class MockAuthBloc extends Mock implements AuthBloc {}
 
 void main() {
-  group("LoginBloc", () {
+  group("🧩 LoginBloc Tests", () {
     late MockUserRepository mockUserRepository;
     late MockAuthBloc mockAuthBloc;
 
@@ -32,10 +32,12 @@ void main() {
       username: "Serhat",
       isReady: false,
       score: 0,
+      isOnline: true,
+      deviceId: "device123",
     );
 
     blocTest<LoginBloc, LoginState>(
-      "emits [loading, success] when login succeeds",
+      "✅ emits [loading, success] when login succeeds",
       build: () => LoginBloc(
         userRepository: mockUserRepository,
         authBloc: mockAuthBloc,
@@ -51,11 +53,32 @@ void main() {
       ],
       verify: (_) {
         verify(() => mockAuthBloc.add(LoggedIn())).called(1);
+        verify(() => mockUserRepository.signIn(email, password)).called(1);
       },
     );
 
     blocTest<LoginBloc, LoginState>(
-      "emits [loading, failure] when login fails",
+      "❌ emits [loading, failure] when AppFailure is thrown",
+      build: () => LoginBloc(
+        userRepository: mockUserRepository,
+        authBloc: mockAuthBloc,
+      ),
+      setUp: () {
+        when(() => mockUserRepository.signIn(email, password))
+            .thenThrow(AppFailure(message: "Invalid credentials", code: "invalid-credentials"));
+      },
+      act: (bloc) => bloc.add(LoginButtonPressed(email: email, password: password)),
+      expect: () => [
+        LoginState.loading(),
+        LoginState.failure("Invalid credentials"),
+      ],
+      verify: (_) {
+        verify(() => mockUserRepository.signIn(email, password)).called(1);
+      },
+    );
+
+    blocTest<LoginBloc, LoginState>(
+      "❌ emits [loading, failure] with generic message when non-AppFailure is thrown",
       build: () => LoginBloc(
         userRepository: mockUserRepository,
         authBloc: mockAuthBloc,
@@ -67,7 +90,7 @@ void main() {
       act: (bloc) => bloc.add(LoginButtonPressed(email: email, password: password)),
       expect: () => [
         LoginState.loading(),
-        LoginState.failure("Exception: Login failed"),
+        LoginState.failure("An unknown error occurred during login."),
       ],
     );
   });

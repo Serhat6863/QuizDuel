@@ -1,6 +1,9 @@
 import 'package:awesome_snackbar_content/awesome_snackbar_content.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:quizduel/core/theme/app_colors.dart';
+import 'package:quizduel/core/theme/app_text_styles.dart';
+import 'package:quizduel/core/theme/app_button_styles.dart';
 import 'package:quizduel/core/utils/logger.dart';
 import 'package:quizduel/features/room/domain/entitiy/room_entity.dart';
 import 'package:quizduel/features/room/domain/enums/room_game_status.dart';
@@ -43,27 +46,20 @@ class _RoomListScreenState extends State<RoomListScreen> {
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(20),
         ),
-        backgroundColor: Colors.white,
+        backgroundColor: AppColors.white,
         child: Padding(
           padding: const EdgeInsets.all(24),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const CircularProgressIndicator(color: Colors.deepPurple),
+              const CircularProgressIndicator(color: AppColors.primary),
               const SizedBox(height: 20),
-              Text(
-                message,
-                style: const TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.black87,
-                ),
-              ),
+              Text(message, style: AppTextStyles.subtitle),
               const SizedBox(height: 8),
-              const Text(
+              Text(
                 "Please wait a few seconds ⏳",
                 textAlign: TextAlign.center,
-                style: TextStyle(color: Colors.black54),
+                style: AppTextStyles.hint,
               ),
             ],
           ),
@@ -97,28 +93,23 @@ class _RoomListScreenState extends State<RoomListScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final authUser = context.read<AuthBloc>().state.user;
+
     return Scaffold(
-      backgroundColor: const Color(0xFFF5E6C4),
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: Column(
         children: [
           // 🌟 HEADER
           Container(
             decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [
-                  Colors.amber.shade400,
-                  Colors.amber.shade600,
-                ],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
+              gradient: AppColors.amberGradient,
               borderRadius: const BorderRadius.only(
                 bottomLeft: Radius.circular(30),
                 bottomRight: Radius.circular(30),
               ),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.25),
+                  color: AppColors.shadowStrong,
                   blurRadius: 8,
                   offset: const Offset(0, 4),
                 ),
@@ -137,23 +128,18 @@ class _RoomListScreenState extends State<RoomListScreen> {
                   },
                   child: Container(
                     decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.2),
+                      color: AppColors.white.withOpacity(0.2),
                       borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: Colors.white30),
+                      border: Border.all(color: AppColors.white70),
                     ),
                     padding: const EdgeInsets.all(8),
                     child: const Icon(Icons.arrow_back_ios_new,
-                        color: Colors.white, size: 22),
+                        color: AppColors.white, size: 22),
                   ),
                 ),
                 const Text(
                   "Available Rooms",
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 22,
-                    fontWeight: FontWeight.bold,
-                    letterSpacing: 1.1,
-                  ),
+                  style: AppTextStyles.headerWhite,
                 ),
                 const SizedBox(width: 40),
               ],
@@ -210,22 +196,23 @@ class _RoomListScreenState extends State<RoomListScreen> {
                 builder: (context, state) {
                   if (state.status == RoomStatus.loadingRooms &&
                       state.availableRooms.isEmpty) {
-                    return const Center(child: CircularProgressIndicator());
+                    return const Center(
+                        child: CircularProgressIndicator(
+                          color: AppColors.primary,
+                        ));
                   }
 
                   if (state.availableRooms.isEmpty) {
                     return RefreshIndicator(
                       onRefresh: _onRefresh,
+                      color: AppColors.primary,
                       child: ListView(
                         children: const [
                           SizedBox(height: 200),
                           Center(
                             child: Text(
                               "No rooms available 🚪",
-                              style: TextStyle(
-                                fontSize: 16,
-                                color: Colors.black54,
-                              ),
+                              style: AppTextStyles.subtitle,
                             ),
                           ),
                         ],
@@ -233,10 +220,9 @@ class _RoomListScreenState extends State<RoomListScreen> {
                     );
                   }
 
-                  final user = context.read<AuthBloc>().state.user!;
-
                   return RefreshIndicator(
                     onRefresh: _onRefresh,
+                    color: AppColors.primary,
                     child: ListView.builder(
                       physics: const AlwaysScrollableScrollPhysics(),
                       padding: const EdgeInsets.symmetric(
@@ -248,14 +234,14 @@ class _RoomListScreenState extends State<RoomListScreen> {
                         return Container(
                           margin: const EdgeInsets.symmetric(vertical: 8),
                           decoration: BoxDecoration(
-                            color: const Color(0xFF3E4A59),
+                            color: AppColors.surfaceDark,
                             borderRadius: BorderRadius.circular(16),
                             border: Border.all(
-                              color: Colors.white.withOpacity(0.05),
+                              color: AppColors.white.withOpacity(0.05),
                             ),
                             boxShadow: [
                               BoxShadow(
-                                color: Colors.black.withOpacity(0.25),
+                                color: AppColors.shadowStrong,
                                 blurRadius: 8,
                                 offset: const Offset(0, 4),
                               ),
@@ -265,30 +251,24 @@ class _RoomListScreenState extends State<RoomListScreen> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              // Room name + type
+                              // Room name + tag
                               Row(
                                 mainAxisAlignment:
                                 MainAxisAlignment.spaceBetween,
                                 children: [
-                                  Text(
-                                    room.roomName,
-                                    style: const TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 18,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
+                                  Text(room.roomName,
+                                      style: AppTextStyles.listTitle
+                                          .copyWith(color: AppColors.white)),
                                   Container(
                                     padding: const EdgeInsets.symmetric(
                                         horizontal: 10, vertical: 4),
                                     decoration: BoxDecoration(
-                                      color: Colors.deepPurple.shade600,
+                                      color: AppColors.primary,
                                       borderRadius: BorderRadius.circular(8),
                                     ),
-                                    child: const Text(
+                                    child: Text(
                                       "Mixed",
-                                      style: TextStyle(
-                                          color: Colors.white, fontSize: 12),
+                                      style: AppTextStyles.smallLabel,
                                     ),
                                   ),
                                 ],
@@ -298,22 +278,20 @@ class _RoomListScreenState extends State<RoomListScreen> {
                               // Players + Questions info
                               Row(
                                 children: [
-                                  const Icon(Icons.people_alt,
-                                      size: 18, color: Colors.white70),
+                                  Icon(Icons.people_alt,
+                                      size: 18, color: AppColors.white70),
                                   const SizedBox(width: 6),
                                   Text(
                                     "${room.user.length}/${room.maxPlayers} Players",
-                                    style: const TextStyle(
-                                        color: Colors.white70, fontSize: 13),
+                                    style: AppTextStyles.smallLabel,
                                   ),
                                   const SizedBox(width: 18),
-                                  const Icon(Icons.quiz_outlined,
-                                      size: 18, color: Colors.white70),
+                                  Icon(Icons.quiz_outlined,
+                                      size: 18, color: AppColors.white70),
                                   const SizedBox(width: 6),
                                   Text(
                                     "${room.quiz.length} Questions",
-                                    style: const TextStyle(
-                                        color: Colors.white70, fontSize: 13),
+                                    style: AppTextStyles.smallLabel,
                                   ),
                                 ],
                               ),
@@ -326,30 +304,25 @@ class _RoomListScreenState extends State<RoomListScreen> {
                                     padding: const EdgeInsets.symmetric(
                                         horizontal: 10, vertical: 5),
                                     decoration: BoxDecoration(
-                                      color: Colors.teal.shade600,
+                                      color: AppColors.green,
                                       borderRadius: BorderRadius.circular(8),
                                     ),
                                     child: Text(
                                       room.status
                                           .toShortString()
                                           .toUpperCase(),
-                                      style: const TextStyle(
-                                        color: Colors.white,
-                                        fontSize: 12,
-                                        fontWeight: FontWeight.w500,
-                                      ),
+                                      style: AppTextStyles.smallLabel
+                                          .copyWith(color: AppColors.white),
                                     ),
                                   ),
-
                                   const Spacer(),
-
-                                  GestureDetector(
-                                    onTap: () {
+                                  ElevatedButton(
+                                    onPressed: () {
                                       if (room.status.isWaiting) {
                                         context.read<RoomBloc>().add(
                                           JoinRoomEvent(
                                             roomId: room.roomId,
-                                            userEntity: user,
+                                            userEntity: authUser!,
                                           ),
                                         );
                                       } else {
@@ -360,14 +333,9 @@ class _RoomListScreenState extends State<RoomListScreen> {
                                         );
                                       }
                                     },
-                                    child: Text(
-                                      "Join",
-                                      style: TextStyle(
-                                        color: Colors.amber.shade400,
-                                        fontSize: 14,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
+                                    style: AppButtonStyles.colored(
+                                        AppColors.amber),
+                                    child: const Text("Join"),
                                   ),
                                 ],
                               ),

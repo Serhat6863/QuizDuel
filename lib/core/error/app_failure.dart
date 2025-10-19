@@ -1,4 +1,4 @@
-class AppFailure{
+class AppFailure implements Exception{
   final String message;
   final String code;
 

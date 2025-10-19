@@ -28,6 +28,8 @@ void main() {
       username: username,
       isReady: false,
       score: 0,
+      isOnline: true,
+      deviceId: "device-1",
     );
 
     blocTest<RegisterBloc, RegisterState>(
@@ -50,13 +52,14 @@ void main() {
       build: () => RegisterBloc(userRepository: mockUserRepository),
       setUp: () {
         when(() => mockUserRepository.register(email, password, username))
-            .thenThrow(Exception("Register failed"));
+            .thenThrow(AppFailure(message: "Register failed", code: "register-failed"));
+
       },
       act: (bloc) =>
           bloc.add(RegisterButtonPressed(email: email, password: password, username: username)),
       expect: () => [
         RegisterState.loading(),
-        RegisterState.failure("Exception: Register failed"),
+        RegisterState.failure("Register failed"),
       ],
     );
   });

@@ -11,6 +11,15 @@ class LoggedIn extends AuthEvent {}
 
 class LoggedOut extends AuthEvent {}
 
-class RefreshUserEvent extends AuthEvent{
+class RefreshUserEvent extends AuthEvent{}
 
+class DeleteAccountEvent extends AuthEvent{}
+
+class SendPasswordResetEmailEvent extends AuthEvent{
+  final String email;
+
+  SendPasswordResetEmailEvent(this.email);
+
+  @override
+  List<Object?> get props => [email];
 }

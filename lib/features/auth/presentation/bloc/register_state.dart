@@ -5,6 +5,8 @@ enum RegisterStatus {
   loading,
   success,
   failure,
+  resentEmail,
+  notVerified,
 }
 
 extension RegisterStatusX on RegisterStatus {
@@ -12,11 +14,13 @@ extension RegisterStatusX on RegisterStatus {
   bool get isLoading => this == RegisterStatus.loading;
   bool get isSuccess => this == RegisterStatus.success;
   bool get isFailure => this == RegisterStatus.failure;
+  bool get isResentEmail => this == RegisterStatus.resentEmail;
+  bool get isNotVerified => this == RegisterStatus.notVerified;
 }
 
 class RegisterState extends Equatable {
   final RegisterStatus status;
-  final String? failure; // 🔥 remplacé AppFailure par String
+  final String? failure;
 
   const RegisterState({
     required this.status,
@@ -36,9 +40,17 @@ class RegisterState extends Equatable {
     status: RegisterStatus.success,
   );
 
+  factory RegisterState.notVerified() => const RegisterState(
+    status: RegisterStatus.notVerified,
+  );
+
   factory RegisterState.failure(String message) => RegisterState(
     status: RegisterStatus.failure,
     failure: message,
+  );
+
+  factory RegisterState.resentEmail() => const RegisterState(
+    status: RegisterStatus.resentEmail,
   );
 
   // 🔹 copyWith

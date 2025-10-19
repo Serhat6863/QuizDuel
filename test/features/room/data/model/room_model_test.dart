@@ -12,6 +12,8 @@ void main() {
       username: "Serhat",
       isReady: true,
       score: 100,
+      isOnline: true,
+      deviceId: "device-123",
     );
 
     final mockQuiz = QuizModel(

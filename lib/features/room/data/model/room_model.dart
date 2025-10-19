@@ -60,6 +60,8 @@ class RoomModel extends RoomEntity {
             username: u.username,
             isReady: u.isReady,
             score: u.score,
+            isOnline: u.isOnline,
+            deviceId: u.deviceId,
           ).toJson())
       },
       'status': status.toShortString(),

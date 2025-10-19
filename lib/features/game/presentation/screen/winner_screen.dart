@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:quizduel/core/theme/app_colors.dart';
+import 'package:quizduel/core/theme/app_text_styles.dart';
+import 'package:quizduel/core/theme/app_button_styles.dart';
 import 'package:quizduel/features/room/domain/entitiy/room_entity.dart';
 import 'package:quizduel/features/room/presentation/bloc/room_bloc.dart';
 import 'package:quizduel/features/room/presentation/bloc/room_event.dart';
@@ -23,7 +26,7 @@ class _WinnerScreenState extends State<WinnerScreen> {
     super.initState();
     sortUsersByScore();
 
-    // 🔄 Fetch updated room data
+    // 🔄 Re-fetch des données du salon
     context.read<RoomBloc>().add(
       GetRoomByIdEvent(roomId: widget.roomEntity.roomId),
     );
@@ -32,169 +35,147 @@ class _WinnerScreenState extends State<WinnerScreen> {
   void sortUsersByScore() {
     final users = [...widget.roomEntity.user];
     users.sort((a, b) => (b.score ?? 0).compareTo(a.score ?? 0));
-
-    setState(() {
-      sortedUsers = users;
-    });
+    setState(() => sortedUsers = users);
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF5E6C4),
-      body: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          // HEADER
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 40),
-            decoration: BoxDecoration(
-              color: Colors.blue.shade400,
-              borderRadius: const BorderRadius.only(
-                bottomLeft: Radius.circular(30),
-                bottomRight: Radius.circular(30),
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      body: SafeArea(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            // 🌈 HEADER
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 35),
+              decoration: BoxDecoration(
+                gradient: AppColors.primaryGradient,
+                borderRadius: const BorderRadius.only(
+                  bottomLeft: Radius.circular(30),
+                  bottomRight: Radius.circular(30),
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: AppColors.shadowStrong,
+                    blurRadius: 8,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: Center(
+                child: Text("QuizDuel", style: AppTextStyles.headerWhite),
               ),
             ),
-            child: const Center(
-              child: Text(
-                "QuizDuel",
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 26,
-                  fontWeight: FontWeight.bold,
+
+            const Spacer(),
+
+            // 🏆 WINNER SECTION
+            Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  Icons.emoji_events,
+                  size: 100,
+                  color: AppColors.amber,
                 ),
-              ),
-            ),
-          ),
+                const SizedBox(height: 10),
+                Text("Winner!", style: AppTextStyles.winnerTitle),
+                const SizedBox(height: 30),
 
-          const Spacer(),
+                // 🧑‍💻 Liste des joueurs
+                BlocBuilder<RoomBloc, RoomState>(
+                  builder: (context, state) {
+                    final room = state.currentRoom ?? widget.roomEntity;
+                    final users = [...room.user];
+                    users.sort((a, b) => (b.score ?? 0).compareTo(a.score ?? 0));
 
-          // WINNER SECTION
-          Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(Icons.emoji_events, size: 100, color: Colors.amber.shade700),
-              const SizedBox(height: 10),
-              Text(
-                "Winner!",
-                style: TextStyle(
-                  fontSize: 32,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.green.shade700,
-                ),
-              ),
-              const SizedBox(height: 20),
+                    return ListView.builder(
+                      shrinkWrap: true,
+                      itemCount: users.length,
+                      padding: const EdgeInsets.symmetric(horizontal: 20),
+                      itemBuilder: (context, index) {
+                        final user = users[index];
 
-              // 🏅 Players List
-              BlocBuilder<RoomBloc, RoomState>(
-                builder: (context, state) {
-                  final room = state.currentRoom ?? widget.roomEntity;
-                  final users = [...room.user];
-                  users.sort((a, b) => (b.score ?? 0).compareTo(a.score ?? 0));
+                        // 🥇 Couleur du rang
+                        Color rankColor;
+                        if (index == 0) {
+                          rankColor = AppColors.amber;
+                        } else if (index == 1) {
+                          rankColor = AppColors.greyLight;
+                        } else if (index == 2) {
+                          rankColor = AppColors.brownLight;
+                        } else {
+                          rankColor = AppColors.blueGrey;
+                        }
 
-                  return ListView.builder(
-                    shrinkWrap: true,
-                    itemCount: users.length,
-                    itemBuilder: (context, index) {
-                      final user = users[index];
-                      return Container(
-                        margin: const EdgeInsets.symmetric(
-                          horizontal: 20,
-                          vertical: 8,
-                        ),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(16),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.grey.shade400,
-                              blurRadius: 4,
-                              offset: const Offset(2, 2),
-                            ),
-                          ],
-                        ),
-                        child: ListTile(
-                          leading: CircleAvatar(
-                            backgroundColor: Colors.blue.shade200,
-                            child: Text(
-                              user.username.isNotEmpty
-                                  ? user.username[0].toUpperCase()
-                                  : '?',
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontWeight: FontWeight.bold,
+                        return Container(
+                          margin: const EdgeInsets.symmetric(vertical: 6),
+                          decoration: BoxDecoration(
+                            color: AppColors.white,
+                            borderRadius: BorderRadius.circular(16),
+                            boxShadow: [
+                              BoxShadow(
+                                color: AppColors.shadowSoft,
+                                blurRadius: 6,
+                                offset: const Offset(0, 3),
+                              ),
+                            ],
+                          ),
+                          child: ListTile(
+                            leading: CircleAvatar(
+                              backgroundColor: rankColor,
+                              radius: 24,
+                              child: Text(
+                                "${index + 1}",
+                                style: AppTextStyles.rankNumber,
                               ),
                             ),
-                          ),
-                          title: Text(
-                            user.username,
-                            style: const TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
+                            title: Text(user.username,
+                                style: AppTextStyles.listTitle),
+                            trailing: Text(
+                              "Score: ${user.score ?? 0}",
+                              style: AppTextStyles.listSubtitle,
                             ),
                           ),
-                          trailing: Text(
-                            "Score: ${user.score ?? 0}",
-                            style: const TextStyle(
-                              fontSize: 16,
-                              color: Colors.black54,
-                            ),
-                          ),
-                        ),
-                      );
-                    },
-                  );
-                },
-              ),
-
-              const SizedBox(height: 100),
-
-              // 🏠 RETURN TO HOME BUTTON
-              BlocListener<RoomBloc, RoomState>(
-                listener: (context, state) {
-                  if (state.status == RoomStatus.roomDeleted) {
-                    Navigator.of(context).pushAndRemoveUntil(
-                      MaterialPageRoute(
-                        builder: (context) => const HomeScreen(),
-                      ),
-                          (route) => false,
-                    );
-                  }
-                },
-                child: ElevatedButton(
-                  onPressed: () {
-                    context.read<RoomBloc>().add(
-                      DeleteRoomEvent(roomId: widget.roomEntity.roomId),
+                        );
+                      },
                     );
                   },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.blue.shade400,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 40,
-                      vertical: 15,
-                    ),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(30),
-                    ),
-                  ),
-                  child: const Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        "Home",
-                        style: TextStyle(fontSize: 18, color: Colors.white),
-                      ),
-                      SizedBox(width: 10),
-                      Icon(Icons.home, color: Colors.white),
-                    ],
+                ),
+
+                const SizedBox(height: 60),
+
+                // 🏠 Retour à l'accueil
+                BlocListener<RoomBloc, RoomState>(
+                  listener: (context, state) {
+                    if (state.status == RoomStatus.roomDeleted) {
+                      Navigator.of(context).pushAndRemoveUntil(
+                        MaterialPageRoute(
+                          builder: (context) => const HomeScreen(),
+                        ),
+                            (route) => false,
+                      );
+                    }
+                  },
+                  child: ElevatedButton.icon(
+                    onPressed: () {
+                      context.read<RoomBloc>().add(
+                        DeleteRoomEvent(roomId: widget.roomEntity.roomId),
+                      );
+                    },
+                    style: AppButtonStyles.primary,
+                    icon: const Icon(Icons.home, color: AppColors.white),
+                    label: const Text("Return Home",
+                        style: AppTextStyles.button),
                   ),
                 ),
-              ),
-            ],
-          ),
+              ],
+            ),
 
-          const Spacer(),
-        ],
+            const Spacer(),
+          ],
+        ),
       ),
     );
   }

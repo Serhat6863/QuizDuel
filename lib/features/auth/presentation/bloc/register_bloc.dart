@@ -9,6 +9,8 @@ class RegisterBloc extends Bloc<RegisterEvent, RegisterState>{
 
   RegisterBloc({required this.userRepository}) : super(RegisterState.initial()){
     on<RegisterButtonPressed>(_registerButtonPressed);
+    on<ResentEmailVerification>(_resentEmailVerification);
+    on<CheckEmailVerified>(_checkEmailVerified);
   }
 
 
@@ -18,6 +20,36 @@ class RegisterBloc extends Bloc<RegisterEvent, RegisterState>{
       final result = await userRepository.register(event.email, event.password, event.username);
 
       emit(RegisterState.success());
+
+    }catch(e){
+      final errorMessage = e is AppFailure ?
+      e.message
+          : "An unknown error occurred during registration.";
+
+      emit(RegisterState.failure(errorMessage));
+    }
+  }
+
+
+  Future<void> _resentEmailVerification(ResentEmailVerification event , Emitter<RegisterState> emit) async{
+    try{
+      await userRepository.resentEmailVerification();
+      emit(RegisterState.resentEmail());
+    }catch(e){
+      emit(RegisterState.failure(e.toString()));
+    }
+  }
+
+
+  Future<void> _checkEmailVerified(CheckEmailVerified event , Emitter<RegisterState> emit) async{
+    try{
+
+      final isVerified = await userRepository.checkEmailVerified();
+      if(isVerified){
+        emit(RegisterState.success());
+      }else{
+        emit(RegisterState.notVerified());
+      }
 
     }catch(e){
       emit(RegisterState.failure(e.toString()));

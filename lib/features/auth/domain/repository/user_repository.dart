@@ -8,4 +8,8 @@ abstract class UserRepository {
   Future<String> getUsernameById(String userId);
   Future<List<UserEntity>> getAllUsers();
   Future<void> updateScore(String userId, int newScore);
+  Future<bool> checkEmailVerified();
+  Future<void> resentEmailVerification();
+  Future<void> deleteAccount();
+  Future<void> resetPassword(String email);
 }
