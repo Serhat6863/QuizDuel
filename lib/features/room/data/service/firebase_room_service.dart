@@ -84,24 +84,52 @@ class FirebaseRoomService {
   }
 
   // 🔹 JOIN ROOM
+  // 🔹 JOIN ROOM
   Future<void> joinRoom(String roomId, UserModel user) async {
     try {
       logger.i("👥 ${user.username} is trying to join room $roomId...");
 
+      // 🧩 1. Vérifier si la room existe
       final roomSnapshot = await db.child("rooms/$roomId").get();
       if (!roomSnapshot.exists) {
-        throw AppFailure(message: "Room $roomId does not exist.", code: "room-not-found");
+        throw AppFailure(
+          message: "Room $roomId does not exist.",
+          code: "room-not-found",
+        );
       }
 
-      final roomData = roomSnapshot.value as Map<dynamic, dynamic>;
-      final currentUsers = roomData['user'] as Map<dynamic, dynamic>? ?? {};
+      // 🧩 2. Récupérer les données de la room
+      final roomData = Map<String, dynamic>.from(roomSnapshot.value as Map);
 
-      if (currentUsers.length >= (roomData['maxPlayers'] ?? 4)) {
-        throw AppFailure(message: "Room $roomId is already full.", code: "room-full");
+      // 🧩 3. Récupérer les utilisateurs actuels
+      final currentUsers = roomData['user'] != null
+          ? Map<String, dynamic>.from(roomData['user'])
+          : <String, dynamic>{};
+
+      // 🧩 4. Vérifier la capacité max
+      final int maxPlayers = roomData['maxPlayers'] ?? 4;
+      if (currentUsers.length >= maxPlayers) {
+        throw AppFailure(
+          message: "Room $roomId is already full.",
+          code: "room-full",
+        );
       }
 
+      // 🧩 5. Vérifier le statut de la room
+      final String status = roomData['status'] ?? 'waiting';
+      final String roomName = roomData['roomName'] ?? roomId;
+      if (status != 'waiting') {
+        throw AppFailure(
+          message:
+          "Cannot join room $roomName as the game has already started.",
+          code: "game-already-started",
+        );
+      }
+
+      // 🧩 6. Ajouter l'utilisateur dans la room
       final userRef = db.child("rooms/$roomId/user/${user.id}");
       await userRef.set(user.toJson());
+
       logger.i("✅ ${user.username} joined room $roomId successfully.");
     } catch (e, s) {
       logger.e("❌ Error joining room: $e", error: e, stackTrace: s);
@@ -111,6 +139,7 @@ class FirebaseRoomService {
       );
     }
   }
+
 
   // 🔹 LEAVE ROOM
   Future<void> leaveRoom(String roomId, UserModel user) async {

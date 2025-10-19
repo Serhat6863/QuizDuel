@@ -86,11 +86,6 @@ class FirebaseUserService {
 
       await user.updateDisplayName(username);
 
-
-      if(user.email != null){
-        throw AppFailure(message: "this email is already in use", code: "email-already-in-use");
-      }
-
       // 🔸 Envoi de l’email de vérification
       if (!user.emailVerified) {
         await user.sendEmailVerification();
